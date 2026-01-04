@@ -1,6 +1,8 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/server.dart';
 
+import 'stats.dart';
+
 class PersonalSite extends StatelessComponent {
   const PersonalSite({super.key});
 
@@ -29,6 +31,7 @@ class _Page extends StatelessComponent {
       classes: 'page',
       children: const [
         HeroSection(),
+        LiveStatsSection(),
         HighlightsSection(),
         ProjectsSection(),
         TrajectorySection(),
@@ -665,4 +668,25 @@ final _styles = [
       FontFamilies.monospace,
     ]),
   ),
+  css('.stats-list').styles(
+    listStyle: ListStyle.none,
+    padding: Spacing.zero,
+    margin: Spacing.zero,
+    display: Display.flex,
+    flexDirection: FlexDirection.column,
+    gap: Gap.all(10.px),
+  ),
+  css('.stat-row').styles(
+    display: Display.flex,
+    alignItems: AlignItems.center,
+    justifyContent: JustifyContent.spaceBetween,
+    gap: Gap.all(8.px),
+  ),
+  css('.stat-line').styles(
+    display: Display.flex,
+    justifyContent: JustifyContent.spaceBetween,
+    alignItems: AlignItems.center,
+    gap: Gap.all(8.px),
+  ),
+  css('.big-number').styles(fontSize: 26.px, fontWeight: FontWeight.w700),
 ];
