@@ -1,5 +1,5 @@
-# Use latest stable channel SDK.
-FROM dart:stable AS build
+# Use pinned Dart SDK to match pubspec.
+FROM dart:3.10.1 AS build
 
 # Resolve app dependencies.
 WORKDIR /app

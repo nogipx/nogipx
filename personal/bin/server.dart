@@ -1,17 +1,12 @@
 import 'dart:io';
 
+import 'package:jaspr/server.dart';
+import 'package:personal/site.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-// Configure routes.
-final _router = Router()
-  ..get('/', _rootHandler)
-  ..get('/echo/<message>', _echoHandler);
-
-Response _rootHandler(Request req) {
-  return Response.ok('Hello, World!\n');
-}
+final _router = Router()..get('/echo/<message>', _echoHandler);
 
 Response _echoHandler(Request request) {
   final message = request.params['message'];
@@ -19,16 +14,17 @@ Response _echoHandler(Request request) {
 }
 
 void main(List<String> args) async {
-  // Use any available host or container IP (usually `0.0.0.0`).
-  final ip = InternetAddress.anyIPv4;
+  Jaspr.initializeApp();
 
-  // Configure a pipeline that logs requests.
+  final jasprHandler = serveApp((request, render) {
+    return render(const PersonalSite());
+  });
+
   final handler = Pipeline()
       .addMiddleware(logRequests())
-      .addHandler(_router.call);
+      .addHandler(Cascade().add(_router.call).add(jasprHandler).handler);
 
-  // For running in containers, we respect the PORT environment variable.
-  final port = int.parse(Platform.environment['PORT'] ?? '8080');
-  final server = await serve(handler, ip, port);
+  final port = int.parse(Platform.environment['PORT'] ?? '9080');
+  final server = await serve(handler, InternetAddress.anyIPv4, port);
   print('Server listening on port ${server.port}');
 }
