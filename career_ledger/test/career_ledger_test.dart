@@ -2,15 +2,9 @@ import 'package:career_ledger/career_ledger.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('A group of tests', () {
-    final awesome = Awesome();
-
-    setUp(() {
-      // Additional setup goes here.
-    });
-
-    test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
-    });
+  test('Exports are available', () {
+    expect(ResumeGenerator, isNotNull);
+    expect(ResumeRepository, isNotNull);
+    expect(MediaAsset, isNotNull);
   });
 }
