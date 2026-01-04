@@ -8,12 +8,12 @@ class PackageInfo {
   PackageInfo({
     required this.name,
     required this.likes,
-    required this.downloads,
+    required this.popularity,
   });
 
   final String name;
   final int likes;
-  final int downloads;
+  final double popularity;
 }
 
 class StatsService {
@@ -43,44 +43,55 @@ class StatsService {
       }
       final pkgJson = jsonDecode(pkgRes.body) as Map<String, dynamic>;
       final likes = pkgJson['likeCount'] as int? ?? 0;
-      final downloads = pkgJson['downloadCount30Days'] as int? ?? 0;
-      results.add(PackageInfo(name: name, likes: likes, downloads: downloads));
+      final popularity =
+          (pkgJson['popularityScore'] as num?)?.toDouble() ?? 0.0;
+      results.add(
+        PackageInfo(name: name, likes: likes, popularity: popularity),
+      );
     }
     return results;
   }
 }
 
 class LiveStatsSection extends AsyncStatelessComponent {
-  const LiveStatsSection({super.key});
+  const LiveStatsSection({required this.service, super.key});
+
+  final StatsService service;
 
   @override
   Future<Component> build(BuildContext context) async {
     try {
-      const service = StatsService(publisher: 'dart.nogipx.dev');
       final packages = await service.load();
       return section([
         div([
-          h2([Component.text('Pub.dev')]),
-        ], classes: 'section-header'),
+          span([Component.text('pub.dev')], classes: 'eyebrow'),
+          div([
+            Component.text(
+              'паблишер: ${service.publisher} (загрузок API не отдаёт, показываю лайки и популярность)',
+            ),
+          ], classes: 'section-note'),
+        ], classes: 'section-head'),
         ul([
           for (final pkg in packages)
             li([
               Component.text(pkg.name),
               span([
-                Component.text('${pkg.likes} 👍'),
-                Component.text('  '),
-                Component.text('${pkg.downloads} ⬇️'),
+                Component.text('${pkg.likes} лайков'),
+                Component.text(
+                  ' · популярность '
+                  '${(pkg.popularity * 100).toStringAsFixed(0)}%',
+                ),
               ], classes: 'muted'),
             ], classes: 'stat-row'),
         ], classes: 'stats-list'),
-      ], classes: 'section');
+      ]);
     } catch (e) {
       return section([
         div([
-          h2([Component.text('Статистика вживую')]),
+          span([Component.text('pub.dev')], classes: 'eyebrow'),
           p([Component.text('Не удалось загрузить: $e')], classes: 'muted'),
         ]),
-      ], classes: 'section');
+      ]);
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:jaspr/server.dart';
+import 'package:personal/resume_data.dart';
 import 'package:personal/site.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -16,8 +17,10 @@ Response _echoHandler(Request request) {
 void main(List<String> args) async {
   Jaspr.initializeApp();
 
+  final resumeEnv = await bootstrapResumeData();
+
   final jasprHandler = serveApp((request, render) {
-    return render(const PersonalSite());
+    return render(PersonalSite(resumeClient: resumeEnv.client));
   });
 
   final handler = Pipeline()
