@@ -1,22 +1,35 @@
 import 'dart:convert';
 
 import 'package:career_ledger/career_ledger.dart';
+import 'package:rpc_dart/rpc_dart.dart';
 import 'package:rpc_dart_data/rpc_dart_data.dart';
 
-/// Minimal example: load data into an in-memory IDataService from rpc_dart_data
-/// and generate a resume JSON.
+/// Minimal RPC example:
+/// 1) Start in-memory IDataService
+/// 2) Seed collections
+/// 3) Register ResumeService responder (loads data through IDataService)
+/// 4) Call it via generated RPC caller
 Future<void> main() async {
   final env = await DataServiceFactory.inMemory();
   final dataService = env.client;
 
   await _seed(dataService);
 
-  final dataRepos = DataServiceResumeRepository(dataService: dataService);
-  final repo = await dataRepos.loadAll();
-  final generator = ResumeGenerator(repo);
-  final resume = generator.generate('variant_en');
+  final resumeResponder = ResumeServiceResponder(
+    dataRepository: DataServiceResumeRepository(dataService: dataService),
+  );
+  env.server.endpoint.registerServiceContract(resumeResponder);
 
-  print(const JsonEncoder.withIndent('  ').convert(resume.toJson()));
+  final callerEndpoint = RpcCallerEndpoint(
+    transport: env.clientTransport,
+    debugLabel: 'ResumeCaller',
+  );
+  final resumeCaller = ResumeContractCaller(callerEndpoint);
+  final response = await resumeCaller.generateResume(
+    GenerateResumeRequest(variantId: 'variant_en'),
+  );
+
+  print(const JsonEncoder.withIndent('  ').convert(response.resume.toJson()));
 }
 
 Future<void> _seed(dynamic dataService) async {

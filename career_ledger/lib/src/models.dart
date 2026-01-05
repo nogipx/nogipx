@@ -1,3 +1,5 @@
+import 'package:rpc_dart/rpc_dart.dart';
+
 enum Language { en, ru }
 
 enum MediaMode { none, idsOnly, full }
@@ -10,7 +12,10 @@ class LocalizedText {
   final String? en;
   final String? ru;
 
-  String? forLang(Language lang) => switch (lang) { Language.en => en, Language.ru => ru };
+  String? forLang(Language lang) => switch (lang) {
+    Language.en => en,
+    Language.ru => ru,
+  };
 
   bool has(Language lang) {
     final value = forLang(lang);
@@ -22,6 +27,13 @@ class LocalizedText {
       en: _string(data['${prefix}_en']),
       ru: _string(data['${prefix}_ru']),
     );
+  }
+
+  Map<String, dynamic> toJsonWithPrefix(String prefix) {
+    return {
+      if (en != null) '${prefix}_en': en,
+      if (ru != null) '${prefix}_ru': ru,
+    };
   }
 }
 
@@ -41,7 +53,7 @@ abstract class RecordBase {
   final String? terms;
 }
 
-class MediaAsset extends RecordBase {
+class MediaAsset extends RecordBase implements IRpcSerializable {
   MediaAsset({
     required super.id,
     required this.dataBase64,
@@ -69,9 +81,21 @@ class MediaAsset extends RecordBase {
       alt: LocalizedText.fromPrefix(data, 'alt'),
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'version': version,
+    'visibility': visible,
+    'tags': tags,
+    if (terms != null) 'terms': terms,
+    'data_base64': dataBase64,
+    if (mime != null) 'mime': mime,
+    ...?alt?.toJsonWithPrefix('alt'),
+  };
 }
 
-class Profile extends RecordBase {
+class Profile extends RecordBase implements IRpcSerializable {
   Profile({
     required super.id,
     required this.fullName,
@@ -105,9 +129,23 @@ class Profile extends RecordBase {
       avatarImageId: _string(data['avatar_image_id']),
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'version': version,
+    'visibility': visible,
+    'tags': tags,
+    if (terms != null) 'terms': terms,
+    ...fullName.toJsonWithPrefix('full_name'),
+    ...title.toJsonWithPrefix('title'),
+    ...?summary?.toJsonWithPrefix('summary'),
+    ...?location?.toJsonWithPrefix('location'),
+    if (avatarImageId != null) 'avatar_image_id': avatarImageId,
+  };
 }
 
-class Experience extends RecordBase {
+class Experience extends RecordBase implements IRpcSerializable {
   Experience({
     required super.id,
     required this.company,
@@ -147,9 +185,25 @@ class Experience extends RecordBase {
       logoImageId: _string(data['logo_image_id']),
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'version': version,
+    'visibility': visible,
+    'tags': tags,
+    if (terms != null) 'terms': terms,
+    ...company.toJsonWithPrefix('company'),
+    ...position.toJsonWithPrefix('position'),
+    'started_at': startedAt,
+    if (endedAt != null) 'ended_at': endedAt,
+    ...?description?.toJsonWithPrefix('description'),
+    ...?city?.toJsonWithPrefix('city'),
+    if (logoImageId != null) 'logo_image_id': logoImageId,
+  };
 }
 
-class Bullet extends RecordBase {
+class Bullet extends RecordBase implements IRpcSerializable {
   Bullet({
     required super.id,
     required this.text,
@@ -177,9 +231,21 @@ class Bullet extends RecordBase {
       projectId: _string(data['project_id']),
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'version': version,
+    'visibility': visible,
+    'tags': tags,
+    if (terms != null) 'terms': terms,
+    ...text.toJsonWithPrefix('text'),
+    if (experienceId != null) 'experience_id': experienceId,
+    if (projectId != null) 'project_id': projectId,
+  };
 }
 
-class Skill extends RecordBase {
+class Skill extends RecordBase implements IRpcSerializable {
   Skill({
     required super.id,
     required this.name,
@@ -207,9 +273,21 @@ class Skill extends RecordBase {
       category: _string(data['category']),
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'version': version,
+    'visibility': visible,
+    'tags': tags,
+    if (terms != null) 'terms': terms,
+    ...name.toJsonWithPrefix('name'),
+    if (level != null) 'level': level,
+    if (category != null) 'category': category,
+  };
 }
 
-class Project extends RecordBase {
+class Project extends RecordBase implements IRpcSerializable {
   Project({
     required super.id,
     required this.name,
@@ -246,9 +324,24 @@ class Project extends RecordBase {
       link: _string(data['link']),
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'version': version,
+    'visibility': visible,
+    'tags': tags,
+    if (terms != null) 'terms': terms,
+    ...name.toJsonWithPrefix('name'),
+    ...?summary?.toJsonWithPrefix('summary'),
+    if (startedAt != null) 'started_at': startedAt,
+    if (endedAt != null) 'ended_at': endedAt,
+    if (logoImageId != null) 'logo_image_id': logoImageId,
+    if (link != null) 'link': link,
+  };
 }
 
-class Education extends RecordBase {
+class Education extends RecordBase implements IRpcSerializable {
   Education({
     required super.id,
     required this.institution,
@@ -282,6 +375,20 @@ class Education extends RecordBase {
       description: LocalizedText.fromPrefix(data, 'description'),
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'version': version,
+    'visibility': visible,
+    'tags': tags,
+    if (terms != null) 'terms': terms,
+    ...institution.toJsonWithPrefix('institution'),
+    ...degree.toJsonWithPrefix('degree'),
+    'started_at': startedAt,
+    if (endedAt != null) 'ended_at': endedAt,
+    ...?description?.toJsonWithPrefix('description'),
+  };
 }
 
 class SortRule {
@@ -296,6 +403,11 @@ class SortRule {
       descending: _bool(data['sort_desc']) ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'sort_field': field,
+    'sort_desc': descending,
+  };
 }
 
 class SectionRule {
@@ -319,12 +431,22 @@ class SectionRule {
       includeTags: _tags(data['include_tags']),
       excludeTags: _tags(data['exclude_tags']),
       limit: _int(data['limit']),
-      sort: _string(data['sort_field']) != null ? SortRule.fromJson(data) : null,
+      sort: _string(data['sort_field']) != null
+          ? SortRule.fromJson(data)
+          : null,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'type': type.name,
+    if (includeTags.isNotEmpty) 'include_tags': includeTags,
+    if (excludeTags.isNotEmpty) 'exclude_tags': excludeTags,
+    if (limit != null) 'limit': limit,
+    if (sort != null) ...sort!.toJson(),
+  };
 }
 
-class ResumeVariant {
+class ResumeVariant implements IRpcSerializable {
   ResumeVariant({
     required this.id,
     required this.lang,
@@ -361,9 +483,20 @@ class ResumeVariant {
       sections: sections,
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'lang': lang.name,
+    'media_mode': mediaMode.name,
+    if (defaultExcludeTags.isNotEmpty)
+      'default_exclude_tags': defaultExcludeTags,
+    'sections': sections.map((s) => s.toJson()).toList(),
+  };
 }
 
-class ResumeDocument {
+class ResumeDocument implements IRpcSerializable {
   ResumeDocument({
     required this.variantId,
     required this.lang,
@@ -374,23 +507,45 @@ class ResumeDocument {
   final Language lang;
   final List<ResumeSection> sections;
 
+  @override
   Map<String, Object?> toJson() => {
-        'variantId': variantId,
-        'lang': lang.name,
-        'sections': sections.map((section) => section.toJson()).toList(),
-      };
+    'variantId': variantId,
+    'lang': lang.name,
+    'sections': sections.map((section) => section.toJson()).toList(),
+  };
+
+  factory ResumeDocument.fromJson(Map<String, dynamic> json) {
+    final rawSections = json['sections'] as List? ?? const [];
+    return ResumeDocument(
+      variantId: json['variantId'] as String? ?? '',
+      lang: _parseLang(json['lang']),
+      sections: rawSections
+          .whereType<Map>()
+          .map((s) => ResumeSection.fromJson(Map<String, dynamic>.from(s)))
+          .toList(),
+    );
+  }
 }
 
-class ResumeSection {
+class ResumeSection implements IRpcSerializable {
   ResumeSection({required this.type, required this.items});
 
   final SectionType type;
   final List<Map<String, Object?>> items;
 
-  Map<String, Object?> toJson() => {
-        'type': type.name,
-        'items': items,
-      };
+  @override
+  Map<String, Object?> toJson() => {'type': type.name, 'items': items};
+
+  factory ResumeSection.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'] as List? ?? const [];
+    return ResumeSection(
+      type: _parseSectionType(json['type']),
+      items: rawItems
+          .whereType<Map>()
+          .map((item) => Map<String, Object?>.from(item))
+          .toList(),
+    );
+  }
 }
 
 Language _parseLang(dynamic value) {

@@ -1,33 +1,22 @@
+import 'package:rpc_dart_data/rpc_dart_data.dart';
+
 import 'models.dart';
 import 'repository.dart';
-
-class DataCollection<T> {
-  const DataCollection({required this.name, required this.fromJson});
-
-  final String name;
-  final T Function(Map<String, dynamic>) fromJson;
-}
 
 /// Base class for repositories backed by IDataService.
 abstract class DataServiceRepositoryBase<T> {
   DataServiceRepositoryBase(this.dataService, {required this.collection});
 
-  final Object dataService;
-  final DataCollection<T> collection;
+  final IDataService dataService;
+  final DataServiceCollection<T> collection;
 
   Future<List<T>> all() async {
-    final ds = dataService as dynamic;
-    final records = await ds.listAllRecords(collection: collection.name);
-    if (records is! List) {
-      throw StateError(
-        'Expected list from IDataService.listAllRecords for ${collection.name}',
-      );
-    }
+    final records = await _fetchRecords();
     return records.map(_unwrapRecord).map(collection.fromJson).toList();
   }
 
   Map<String, dynamic> _unwrapRecord(dynamic record) {
-    if (record is Map) return Map<String, dynamic>.from(record as Map);
+    if (record is Map) return Map<String, dynamic>.from(record);
     final payload = (record as dynamic).payload;
     if (payload is Map) {
       final map = Map<String, dynamic>.from(payload);
@@ -37,14 +26,23 @@ abstract class DataServiceRepositoryBase<T> {
     }
     throw StateError('Unsupported record type: ${record.runtimeType}');
   }
+
+  Future<List<dynamic>> _fetchRecords() async {
+    final ds = dataService;
+    final all = await ds.listAllRecords(collection: collection.collection);
+    return all;
+  }
 }
 
 class MediaAssetsRepository extends DataServiceRepositoryBase<MediaAsset> {
   MediaAssetsRepository(super.dataService)
     : super(
-        collection: DataCollection(
-          name: 'media_assets',
+        collection: DataServiceCollection(
+          collection: 'media_assets',
           fromJson: MediaAsset.fromJson,
+          dataService: dataService,
+          toJson: (MediaAsset model) => model.toJson(),
+          idSelector: (MediaAsset model) => model.id,
         ),
       );
 }
@@ -52,9 +50,12 @@ class MediaAssetsRepository extends DataServiceRepositoryBase<MediaAsset> {
 class ProfilesRepository extends DataServiceRepositoryBase<Profile> {
   ProfilesRepository(super.dataService)
     : super(
-        collection: DataCollection(
-          name: 'profiles',
+        collection: DataServiceCollection(
+          collection: 'profiles',
           fromJson: Profile.fromJson,
+          dataService: dataService,
+          toJson: (Profile model) => model.toJson(),
+          idSelector: (Profile model) => model.id,
         ),
       );
 }
@@ -62,9 +63,12 @@ class ProfilesRepository extends DataServiceRepositoryBase<Profile> {
 class ExperiencesRepository extends DataServiceRepositoryBase<Experience> {
   ExperiencesRepository(super.dataService)
     : super(
-        collection: DataCollection(
-          name: 'experiences',
+        collection: DataServiceCollection(
+          collection: 'experiences',
           fromJson: Experience.fromJson,
+          dataService: dataService,
+          toJson: (Experience model) => model.toJson(),
+          idSelector: (Experience model) => model.id,
         ),
       );
 }
@@ -72,23 +76,38 @@ class ExperiencesRepository extends DataServiceRepositoryBase<Experience> {
 class BulletsRepository extends DataServiceRepositoryBase<Bullet> {
   BulletsRepository(super.dataService)
     : super(
-        collection: DataCollection(name: 'bullets', fromJson: Bullet.fromJson),
+        collection: DataServiceCollection(
+          collection: 'bullets',
+          fromJson: Bullet.fromJson,
+          dataService: dataService,
+          toJson: (Bullet model) => model.toJson(),
+          idSelector: (Bullet model) => model.id,
+        ),
       );
 }
 
 class SkillsRepository extends DataServiceRepositoryBase<Skill> {
   SkillsRepository(super.dataService)
     : super(
-        collection: DataCollection(name: 'skills', fromJson: Skill.fromJson),
+        collection: DataServiceCollection(
+          collection: 'skills',
+          fromJson: Skill.fromJson,
+          dataService: dataService,
+          toJson: (Skill model) => model.toJson(),
+          idSelector: (Skill model) => model.id,
+        ),
       );
 }
 
 class ProjectsRepository extends DataServiceRepositoryBase<Project> {
   ProjectsRepository(super.dataService)
     : super(
-        collection: DataCollection(
-          name: 'projects',
+        collection: DataServiceCollection(
+          collection: 'projects',
           fromJson: Project.fromJson,
+          dataService: dataService,
+          toJson: (Project model) => model.toJson(),
+          idSelector: (Project model) => model.id,
         ),
       );
 }
@@ -96,9 +115,12 @@ class ProjectsRepository extends DataServiceRepositoryBase<Project> {
 class EducationRepository extends DataServiceRepositoryBase<Education> {
   EducationRepository(super.dataService)
     : super(
-        collection: DataCollection(
-          name: 'education',
+        collection: DataServiceCollection(
+          collection: 'education',
           fromJson: Education.fromJson,
+          dataService: dataService,
+          toJson: (Education model) => model.toJson(),
+          idSelector: (Education model) => model.id,
         ),
       );
 }
@@ -107,9 +129,12 @@ class ResumeVariantsRepository
     extends DataServiceRepositoryBase<ResumeVariant> {
   ResumeVariantsRepository(super.dataService)
     : super(
-        collection: DataCollection(
-          name: 'resume_variants',
+        collection: DataServiceCollection(
+          collection: 'resume_variants',
           fromJson: ResumeVariant.fromJson,
+          dataService: dataService,
+          toJson: (ResumeVariant model) => model.toJson(),
+          idSelector: (ResumeVariant model) => model.id,
         ),
       );
 }
@@ -117,7 +142,7 @@ class ResumeVariantsRepository
 /// Aggregates all data-service-backed repositories to load an in-memory snapshot
 /// used by the ResumeGenerator.
 class DataServiceResumeRepository {
-  DataServiceResumeRepository({required Object dataService})
+  DataServiceResumeRepository({required IDataService dataService})
     : mediaAssets = MediaAssetsRepository(dataService),
       profiles = ProfilesRepository(dataService),
       experiences = ExperiencesRepository(dataService),
@@ -136,7 +161,7 @@ class DataServiceResumeRepository {
   final EducationRepository education;
   final ResumeVariantsRepository variants;
 
-  Future<ResumeRepository> loadAll() async {
+  Future<ResumeRepository> getSnapshot() async {
     final media = await mediaAssets.all();
     final profileList = await profiles.all();
     final experienceList = await experiences.all();

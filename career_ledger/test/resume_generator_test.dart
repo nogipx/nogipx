@@ -1,12 +1,13 @@
 import 'package:career_ledger/career_ledger.dart';
+import 'package:rpc_dart_data/rpc_dart_data.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('DataServiceResumeLoader', () {
     test('loads from data service and generates resume', () async {
-      final fakeData = _fakeDataService();
-      final dataRepo = DataServiceResumeRepository(dataService: fakeData);
-      final repo = await dataRepo.loadAll();
+      final dataService = await _seedDataService();
+      final dataRepo = DataServiceResumeRepository(dataService: dataService);
+      final repo = await dataRepo.getSnapshot();
       final generator = ResumeGenerator(repo);
 
       final doc = generator.generate('variant1');
@@ -30,7 +31,11 @@ void main() {
       expect(profileSection, isNotEmpty);
       final profile = profileSection.first;
       expect(profile['fullName'], 'Alex Doe');
-      expect((profile['avatar'] as Map)['data'], isNotEmpty, reason: 'avatar base64 included in full mode');
+      expect(
+        (profile['avatar'] as Map)['data'],
+        isNotEmpty,
+        reason: 'avatar base64 included in full mode',
+      );
 
       final experienceSection = _section(json, SectionType.experience);
       expect(experienceSection.length, 1, reason: 'limit applied');
@@ -39,14 +44,25 @@ void main() {
       expect(exp['period'], contains('2020'));
 
       final bulletSection = _section(json, SectionType.bullets);
-      expect(bulletSection.length, 1, reason: 'bullets without translation are excluded');
+      expect(
+        bulletSection.length,
+        1,
+        reason: 'bullets without translation are excluded',
+      );
 
       final skillsSection = _section(json, SectionType.skills);
-      expect(skillsSection.length, 1, reason: 'skills without translation are excluded');
+      expect(
+        skillsSection.length,
+        1,
+        reason: 'skills without translation are excluded',
+      );
     });
 
     test('media mode idsOnly strips base64 payload', () {
-      final repository = _buildRepository(mediaMode: MediaMode.idsOnly, variantId: 'variant_en_ids');
+      final repository = _buildRepository(
+        mediaMode: MediaMode.idsOnly,
+        variantId: 'variant_en_ids',
+      );
       final generator = ResumeGenerator(repository);
 
       final doc = generator.generate('variant_en_ids');
@@ -59,7 +75,10 @@ void main() {
   });
 }
 
-List<Map<String, Object?>> _section(Map<String, Object?> json, SectionType type) {
+List<Map<String, Object?>> _section(
+  Map<String, Object?> json,
+  SectionType type,
+) {
   final sections = (json['sections'] as List).cast<Map<String, Object?>>();
   for (final section in sections) {
     if (section['type'] == type.name) {
@@ -102,7 +121,10 @@ ResumeRepository _buildRepository({
     position: const LocalizedText(en: 'Team Lead', ru: 'Тимлид'),
     startedAt: DateTime.utc(2020, 1, 1).millisecondsSinceEpoch,
     endedAt: DateTime.utc(2021, 6, 1).millisecondsSinceEpoch,
-    description: const LocalizedText(en: 'Led a team.', ru: 'Руководил командой.'),
+    description: const LocalizedText(
+      en: 'Led a team.',
+      ru: 'Руководил командой.',
+    ),
     city: const LocalizedText(en: 'Berlin', ru: 'Берлин'),
     logoImageId: 'logo1',
     tags: const ['relevant'],
@@ -189,9 +211,22 @@ ResumeRepository _buildRepository({
   );
 }
 
-FakeDataService _fakeDataService() {
+Future<IDataService> _seedDataService() async {
+  final env = await DataServiceFactory.inMemory();
+  final dataService = env.client;
+  final seed = _seedData();
+  for (final entry in seed.entries) {
+    final collection = entry.key;
+    for (final record in entry.value) {
+      await dataService.create(collection: collection, payload: record);
+    }
+  }
+  return dataService;
+}
+
+Map<String, List<Map<String, Object?>>> _seedData() {
   final now = DateTime.utc(2020, 1, 1).millisecondsSinceEpoch;
-  return FakeDataService({
+  return {
     'media_assets': [
       {
         'id': 'avatar1',
@@ -238,15 +273,5 @@ FakeDataService _fakeDataService() {
         ],
       },
     ],
-  });
-}
-
-class FakeDataService {
-  FakeDataService(this.collections);
-
-  final Map<String, List<Map<String, Object?>>> collections;
-
-  Future<List<Map<String, Object?>>> listRecords(String collection) async {
-    return collections[collection] ?? [];
-  }
+  };
 }
