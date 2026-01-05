@@ -1047,6 +1047,15 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
                           ),
                         ),
                       ],
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -1280,6 +1289,15 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
                           ),
                         ],
                       ),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
                       if (error != null) ...[
                         const SizedBox(height: 8),
                         Text(
