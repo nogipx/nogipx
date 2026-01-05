@@ -324,57 +324,57 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
   }
 
   List<_TabConfig> _tabs() => [
-        _TabConfig(
-          title: 'Подключение',
-          icon: Icons.storage,
-          builder: (_) => _buildConnectionTab(),
-        ),
-        _TabConfig(
-          title: 'Профиль',
-          icon: Icons.person,
-          builder: (_) => _buildProfilesTab(),
-        ),
-        _TabConfig(
-          title: 'Опыт',
-          icon: Icons.work_history,
-          builder: (_) => _buildExperienceTab(),
-        ),
-        _TabConfig(
-          title: 'Проекты',
-          icon: Icons.account_tree,
-          builder: (_) => _buildProjectsTab(),
-        ),
-        _TabConfig(
-          title: 'Навыки',
-          icon: Icons.lightbulb,
-          builder: (_) => _buildSkillsTab(),
-        ),
-        _TabConfig(
-          title: 'Образование',
-          icon: Icons.school,
-          builder: (_) => _buildEducationTab(),
-        ),
-        _TabConfig(
-          title: 'Буллеты',
-          icon: Icons.list_alt,
-          builder: (_) => _buildBulletsTab(),
-        ),
-        _TabConfig(
-          title: 'Медиа',
-          icon: Icons.photo_library,
-          builder: (_) => _buildMediaTab(),
-        ),
-        _TabConfig(
-          title: 'Варианты резюме',
-          icon: Icons.dashboard_customize,
-          builder: (_) => _buildVariantsTab(),
-        ),
-        _TabConfig(
-          title: 'Сборка резюме',
-          icon: Icons.description,
-          builder: (_) => _buildResumeBuilder(),
-        ),
-      ];
+    _TabConfig(
+      title: 'Подключение',
+      icon: Icons.storage,
+      builder: (_) => _buildConnectionTab(),
+    ),
+    _TabConfig(
+      title: 'Профиль',
+      icon: Icons.person,
+      builder: (_) => _buildProfilesTab(),
+    ),
+    _TabConfig(
+      title: 'Опыт',
+      icon: Icons.work_history,
+      builder: (_) => _buildExperienceTab(),
+    ),
+    _TabConfig(
+      title: 'Проекты',
+      icon: Icons.account_tree,
+      builder: (_) => _buildProjectsTab(),
+    ),
+    _TabConfig(
+      title: 'Навыки',
+      icon: Icons.lightbulb,
+      builder: (_) => _buildSkillsTab(),
+    ),
+    _TabConfig(
+      title: 'Образование',
+      icon: Icons.school,
+      builder: (_) => _buildEducationTab(),
+    ),
+    _TabConfig(
+      title: 'Буллеты',
+      icon: Icons.list_alt,
+      builder: (_) => _buildBulletsTab(),
+    ),
+    _TabConfig(
+      title: 'Медиа',
+      icon: Icons.photo_library,
+      builder: (_) => _buildMediaTab(),
+    ),
+    _TabConfig(
+      title: 'Варианты резюме',
+      icon: Icons.dashboard_customize,
+      builder: (_) => _buildVariantsTab(),
+    ),
+    _TabConfig(
+      title: 'Сборка резюме',
+      icon: Icons.description,
+      builder: (_) => _buildResumeBuilder(),
+    ),
+  ];
 
   Widget _buildConnectionTab() {
     return Padding(
@@ -535,8 +535,10 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
                   children: [
                     const Text(
                       'Что происходит после подключения?',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -584,7 +586,8 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
       title: 'Опыт работы',
       collection: collection,
       idSelector: (e) => e.id,
-      titleBuilder: (e) => '${e.company.en ?? e.company.ru ?? e.id} — '
+      titleBuilder: (e) =>
+          '${e.company.en ?? e.company.ru ?? e.id} — '
           '${e.position.en ?? e.position.ru ?? ''}',
       subtitleBuilder: (e) =>
           'С ${e.startedAt}${e.endedAt != null ? ' по ${e.endedAt}' : ''}',
@@ -600,8 +603,10 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
       collection: collection,
       idSelector: (p) => p.id,
       titleBuilder: (p) => p.name.en ?? p.name.ru ?? p.id,
-      subtitleBuilder: (p) =>
-          [p.summary?.en ?? p.summary?.ru, p.link].whereType<String>().join(' • '),
+      subtitleBuilder: (p) => [
+        p.summary?.en ?? p.summary?.ru,
+        p.link,
+      ].whereType<String>().join(' • '),
       editor: (existing) => _showProjectDialog(existing),
     );
   }
@@ -684,10 +689,7 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     final caller = _resumeCaller;
     final variants = _variants;
     if (caller == null || variants == null) return _needsConnection();
-    return _ResumeBuilder(
-      variantsCollection: variants,
-      caller: caller,
-    );
+    return _ResumeBuilder(variantsCollection: variants, caller: caller);
   }
 
   Widget _needsConnection() {
@@ -715,107 +717,101 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     return showDialog<Profile>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return AlertDialog(
-            title: Text(
-              existing == null ? 'Новый профиль' : 'Редактировать профиль',
-            ),
-            content: SizedBox(
-              width: 600,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RecordBaseFields(
-                      controllers: base,
-                      onChanged: () => setModalState(() {}),
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(
-                      label: 'Полное имя',
-                      controllers: fullName,
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(
-                      label: 'Должность',
-                      controllers: title,
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(
-                      label: 'Резюме (summary)',
-                      controllers: summary,
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(
-                      label: 'Локация',
-                      controllers: location,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: avatar,
-                      decoration: const InputDecoration(
-                        labelText: 'Avatar image id',
-                        border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(
+                existing == null ? 'Новый профиль' : 'Редактировать профиль',
+              ),
+              content: SizedBox(
+                width: 600,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RecordBaseFields(
+                        controllers: base,
+                        onChanged: () => setModalState(() {}),
                       ),
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                      const SizedBox(height: 12),
+                      LocalizedFields(
+                        label: 'Полное имя',
+                        controllers: fullName,
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Должность', controllers: title),
+                      const SizedBox(height: 12),
+                      LocalizedFields(
+                        label: 'Резюме (summary)',
+                        controllers: summary,
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Локация', controllers: location),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: avatar,
+                        decoration: const InputDecoration(
+                          labelText: 'Avatar image id',
+                          border: OutlineInputBorder(),
                         ),
                       ),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final full = fullName.build();
-                  final role = title.build();
-                  if (!_hasContent(full) || !_hasContent(role)) {
-                    setModalState(
-                      () => error = 'Имя и должность должны быть заполнены.',
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final full = fullName.build();
+                    final role = title.build();
+                    if (!_hasContent(full) || !_hasContent(role)) {
+                      setModalState(
+                        () => error = 'Имя и должность должны быть заполнены.',
+                      );
+                      return;
+                    }
+                    final profile = Profile(
+                      id: base.id.text.trim(),
+                      visible: base.visible,
+                      tags: _parseTags(base.tags.text),
+                      terms: base.terms.text.trim().isEmpty
+                          ? null
+                          : base.terms.text.trim(),
+                      fullName: full,
+                      title: role,
+                      summary: summary.build(),
+                      location: location.build(),
+                      avatarImageId: avatar.text.trim().isEmpty
+                          ? null
+                          : avatar.text.trim(),
+                      version: existing?.version ?? 0,
                     );
-                    return;
-                  }
-                  final profile = Profile(
-                    id: base.id.text.trim(),
-                    visible: base.visible,
-                    tags: _parseTags(base.tags.text),
-                    terms: base.terms.text.trim().isEmpty
-                        ? null
-                        : base.terms.text.trim(),
-                    fullName: full,
-                    title: role,
-                    summary: summary.build(),
-                    location: location.build(),
-                    avatarImageId: avatar.text.trim().isEmpty
-                        ? null
-                        : avatar.text.trim(),
-                    version: existing?.version ?? 0,
-                  );
-                  Navigator.pop(context, profile);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        });
+                    Navigator.pop(context, profile);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
 
-  Future<Experience?> _showExperienceDialog(
-    Versioned<Experience>? existing,
-  ) {
+  Future<Experience?> _showExperienceDialog(Versioned<Experience>? existing) {
     final base = RecordFormControllers(
       id: existing?.data.id ?? _newId('exp'),
       visible: existing?.data.visible ?? true,
@@ -824,8 +820,9 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     );
     final company = LocalizedTextControllers(value: existing?.data.company);
     final position = LocalizedTextControllers(value: existing?.data.position);
-    final description =
-        LocalizedTextControllers(value: existing?.data.description);
+    final description = LocalizedTextControllers(
+      value: existing?.data.description,
+    );
     final city = LocalizedTextControllers(value: existing?.data.city);
     final started = TextEditingController(
       text: existing?.data.startedAt.toString() ?? '',
@@ -833,9 +830,7 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     final ended = TextEditingController(
       text: existing?.data.endedAt?.toString() ?? '',
     );
-    final logo = TextEditingController(
-      text: existing?.data.logoImageId ?? '',
-    );
+    final logo = TextEditingController(text: existing?.data.logoImageId ?? '');
     String? error;
 
     return showDialog<Experience>(
@@ -858,25 +853,16 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
                         onChanged: () => setModalState(() {}),
                       ),
                       const SizedBox(height: 12),
-                      LocalizedFields(
-                        label: 'Компания',
-                        controllers: company,
-                      ),
+                      LocalizedFields(label: 'Компания', controllers: company),
                       const SizedBox(height: 12),
-                      LocalizedFields(
-                        label: 'Позиция',
-                        controllers: position,
-                      ),
+                      LocalizedFields(label: 'Позиция', controllers: position),
                       const SizedBox(height: 12),
                       LocalizedFields(
                         label: 'Описание',
                         controllers: description,
                       ),
                       const SizedBox(height: 12),
-                      LocalizedFields(
-                        label: 'Город',
-                        controllers: city,
-                      ),
+                      LocalizedFields(label: 'Город', controllers: city),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 12,
@@ -938,7 +924,8 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
                   onPressed: () {
                     final companyText = company.build();
                     final positionText = position.build();
-                    if (!_hasContent(companyText) || !_hasContent(positionText)) {
+                    if (!_hasContent(companyText) ||
+                        !_hasContent(positionText)) {
                       setModalState(
                         () => error = 'Компания и позиция обязательны.',
                       );
@@ -964,8 +951,9 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
                       endedAt: _parseInt(ended.text),
                       description: description.build(),
                       city: city.build(),
-                      logoImageId:
-                          logo.text.trim().isEmpty ? null : logo.text.trim(),
+                      logoImageId: logo.text.trim().isEmpty
+                          ? null
+                          : logo.text.trim(),
                       version: existing?.version ?? 0,
                     );
                     Navigator.pop(context, experience);
@@ -995,133 +983,134 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     final ended = TextEditingController(
       text: existing?.data.endedAt?.toString() ?? '',
     );
-    final logo = TextEditingController(
-      text: existing?.data.logoImageId ?? '',
-    );
+    final logo = TextEditingController(text: existing?.data.logoImageId ?? '');
     final link = TextEditingController(text: existing?.data.link ?? '');
     String? error;
 
     return showDialog<Project>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return AlertDialog(
-            title: Text(
-              existing == null ? 'Новый проект' : 'Редактировать проект',
-            ),
-            content: SizedBox(
-              width: 650,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RecordBaseFields(
-                      controllers: base,
-                      onChanged: () => setModalState(() {}),
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(label: 'Название', controllers: name),
-                    const SizedBox(height: 12),
-                    LocalizedFields(label: 'Описание', controllers: summary),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        SizedBox(
-                          width: 200,
-                          child: TextField(
-                            controller: started,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Начало (ms epoch)',
-                              border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(
+                existing == null ? 'Новый проект' : 'Редактировать проект',
+              ),
+              content: SizedBox(
+                width: 650,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RecordBaseFields(
+                        controllers: base,
+                        onChanged: () => setModalState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Название', controllers: name),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Описание', controllers: summary),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          SizedBox(
+                            width: 200,
+                            child: TextField(
+                              controller: started,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Начало (ms epoch)',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 200,
-                          child: TextField(
-                            controller: ended,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Конец (ms epoch)',
-                              border: OutlineInputBorder(),
+                          SizedBox(
+                            width: 200,
+                            child: TextField(
+                              controller: ended,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Конец (ms epoch)',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 220,
-                          child: TextField(
-                            controller: logo,
-                            decoration: const InputDecoration(
-                              labelText: 'Logo image id',
-                              border: OutlineInputBorder(),
+                          SizedBox(
+                            width: 220,
+                            child: TextField(
+                              controller: logo,
+                              decoration: const InputDecoration(
+                                labelText: 'Logo image id',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 260,
-                          child: TextField(
-                            controller: link,
-                            decoration: const InputDecoration(
-                              labelText: 'Ссылка',
-                              border: OutlineInputBorder(),
+                          SizedBox(
+                            width: 260,
+                            child: TextField(
+                              controller: link,
+                              decoration: const InputDecoration(
+                                labelText: 'Ссылка',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final nameText = name.build();
-                  if (!_hasContent(nameText)) {
-                    setModalState(
-                      () => error = 'Название проекта обязательно.',
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final nameText = name.build();
+                    if (!_hasContent(nameText)) {
+                      setModalState(
+                        () => error = 'Название проекта обязательно.',
+                      );
+                      return;
+                    }
+                    final project = Project(
+                      id: base.id.text.trim(),
+                      visible: base.visible,
+                      tags: _parseTags(base.tags.text),
+                      terms: base.terms.text.trim().isEmpty
+                          ? null
+                          : base.terms.text.trim(),
+                      name: nameText,
+                      summary: summary.build(),
+                      startedAt: _parseInt(started.text),
+                      endedAt: _parseInt(ended.text),
+                      logoImageId: logo.text.trim().isEmpty
+                          ? null
+                          : logo.text.trim(),
+                      link: link.text.trim().isEmpty ? null : link.text.trim(),
+                      version: existing?.version ?? 0,
                     );
-                    return;
-                  }
-                  final project = Project(
-                    id: base.id.text.trim(),
-                    visible: base.visible,
-                    tags: _parseTags(base.tags.text),
-                    terms: base.terms.text.trim().isEmpty
-                        ? null
-                        : base.terms.text.trim(),
-                    name: nameText,
-                    summary: summary.build(),
-                    startedAt: _parseInt(started.text),
-                    endedAt: _parseInt(ended.text),
-                    logoImageId:
-                        logo.text.trim().isEmpty ? null : logo.text.trim(),
-                    link: link.text.trim().isEmpty ? null : link.text.trim(),
-                    version: existing?.version ?? 0,
-                  );
-                  Navigator.pop(context, project);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        });
+                    Navigator.pop(context, project);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -1137,105 +1126,107 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     final level = TextEditingController(
       text: existing?.data.level?.toString() ?? '',
     );
-    final category = TextEditingController(
-      text: existing?.data.category ?? '',
-    );
+    final category = TextEditingController(text: existing?.data.category ?? '');
     String? error;
 
     return showDialog<Skill>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return AlertDialog(
-            title: Text(
-              existing == null ? 'Новый навык' : 'Редактировать навык',
-            ),
-            content: SizedBox(
-              width: 520,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RecordBaseFields(
-                      controllers: base,
-                      onChanged: () => setModalState(() {}),
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(label: 'Название', controllers: name),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        SizedBox(
-                          width: 180,
-                          child: TextField(
-                            controller: level,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Уровень (число)',
-                              border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(
+                existing == null ? 'Новый навык' : 'Редактировать навык',
+              ),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RecordBaseFields(
+                        controllers: base,
+                        onChanged: () => setModalState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Название', controllers: name),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          SizedBox(
+                            width: 180,
+                            child: TextField(
+                              controller: level,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Уровень (число)',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 240,
-                          child: TextField(
-                            controller: category,
-                            decoration: const InputDecoration(
-                              labelText: 'Категория',
-                              border: OutlineInputBorder(),
+                          SizedBox(
+                            width: 240,
+                            child: TextField(
+                              controller: category,
+                              decoration: const InputDecoration(
+                                labelText: 'Категория',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final nameText = name.build();
-                  if (!_hasContent(nameText)) {
-                    setModalState(() => error = 'Название навыка обязательно.');
-                    return;
-                  }
-                  final skill = Skill(
-                    id: base.id.text.trim(),
-                    visible: base.visible,
-                    tags: _parseTags(base.tags.text),
-                    terms: base.terms.text.trim().isEmpty
-                        ? null
-                        : base.terms.text.trim(),
-                    name: nameText,
-                    level: _parseInt(level.text),
-                    category: category.text.trim().isEmpty
-                        ? null
-                        : category.text.trim(),
-                    version: existing?.version ?? 0,
-                  );
-                  Navigator.pop(context, skill);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        });
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final nameText = name.build();
+                    if (!_hasContent(nameText)) {
+                      setModalState(
+                        () => error = 'Название навыка обязательно.',
+                      );
+                      return;
+                    }
+                    final skill = Skill(
+                      id: base.id.text.trim(),
+                      visible: base.visible,
+                      tags: _parseTags(base.tags.text),
+                      terms: base.terms.text.trim().isEmpty
+                          ? null
+                          : base.terms.text.trim(),
+                      name: nameText,
+                      level: _parseInt(level.text),
+                      category: category.text.trim().isEmpty
+                          ? null
+                          : category.text.trim(),
+                      version: existing?.version ?? 0,
+                    );
+                    Navigator.pop(context, skill);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -1247,11 +1238,13 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
       tags: existing?.data.tags,
       terms: existing?.data.terms,
     );
-    final institution =
-        LocalizedTextControllers(value: existing?.data.institution);
+    final institution = LocalizedTextControllers(
+      value: existing?.data.institution,
+    );
     final degree = LocalizedTextControllers(value: existing?.data.degree);
-    final description =
-        LocalizedTextControllers(value: existing?.data.description);
+    final description = LocalizedTextControllers(
+      value: existing?.data.description,
+    );
     final started = TextEditingController(
       text: existing?.data.startedAt.toString() ?? '',
     );
@@ -1263,120 +1256,122 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     return showDialog<Education>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return AlertDialog(
-            title: Text(
-              existing == null ? 'Новое образование' : 'Редактировать запись',
-            ),
-            content: SizedBox(
-              width: 620,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RecordBaseFields(
-                      controllers: base,
-                      onChanged: () => setModalState(() {}),
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(
-                      label: 'Учреждение',
-                      controllers: institution,
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(label: 'Степень', controllers: degree),
-                    const SizedBox(height: 12),
-                    LocalizedFields(
-                      label: 'Описание',
-                      controllers: description,
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        SizedBox(
-                          width: 200,
-                          child: TextField(
-                            controller: started,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Начало (ms epoch)',
-                              border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(
+                existing == null ? 'Новое образование' : 'Редактировать запись',
+              ),
+              content: SizedBox(
+                width: 620,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RecordBaseFields(
+                        controllers: base,
+                        onChanged: () => setModalState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(
+                        label: 'Учреждение',
+                        controllers: institution,
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Степень', controllers: degree),
+                      const SizedBox(height: 12),
+                      LocalizedFields(
+                        label: 'Описание',
+                        controllers: description,
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          SizedBox(
+                            width: 200,
+                            child: TextField(
+                              controller: started,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Начало (ms epoch)',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 200,
-                          child: TextField(
-                            controller: ended,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Конец (ms epoch)',
-                              border: OutlineInputBorder(),
+                          SizedBox(
+                            width: 200,
+                            child: TextField(
+                              controller: ended,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Конец (ms epoch)',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final institutionText = institution.build();
-                  final degreeText = degree.build();
-                  if (!_hasContent(institutionText) ||
-                      !_hasContent(degreeText)) {
-                    setModalState(
-                      () =>
-                          error = 'Учреждение и степень должны быть заполнены.',
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final institutionText = institution.build();
+                    final degreeText = degree.build();
+                    if (!_hasContent(institutionText) ||
+                        !_hasContent(degreeText)) {
+                      setModalState(
+                        () => error =
+                            'Учреждение и степень должны быть заполнены.',
+                      );
+                      return;
+                    }
+                    final start = _parseInt(started.text);
+                    if (start == null) {
+                      setModalState(
+                        () => error = 'Дата начала обязательна (ms epoch).',
+                      );
+                      return;
+                    }
+                    final education = Education(
+                      id: base.id.text.trim(),
+                      visible: base.visible,
+                      tags: _parseTags(base.tags.text),
+                      terms: base.terms.text.trim().isEmpty
+                          ? null
+                          : base.terms.text.trim(),
+                      institution: institutionText,
+                      degree: degreeText,
+                      startedAt: start,
+                      endedAt: _parseInt(ended.text),
+                      description: description.build(),
+                      version: existing?.version ?? 0,
                     );
-                    return;
-                  }
-                  final start = _parseInt(started.text);
-                  if (start == null) {
-                    setModalState(
-                      () => error = 'Дата начала обязательна (ms epoch).',
-                    );
-                    return;
-                  }
-                  final education = Education(
-                    id: base.id.text.trim(),
-                    visible: base.visible,
-                    tags: _parseTags(base.tags.text),
-                    terms: base.terms.text.trim().isEmpty
-                        ? null
-                        : base.terms.text.trim(),
-                    institution: institutionText,
-                    degree: degreeText,
-                    startedAt: start,
-                    endedAt: _parseInt(ended.text),
-                    description: description.build(),
-                    version: existing?.version ?? 0,
-                  );
-                  Navigator.pop(context, education);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        });
+                    Navigator.pop(context, education);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -1400,100 +1395,100 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     return showDialog<Bullet>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return AlertDialog(
-            title: Text(
-              existing == null ? 'Новый буллет' : 'Редактировать буллет',
-            ),
-            content: SizedBox(
-              width: 520,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RecordBaseFields(
-                      controllers: base,
-                      onChanged: () => setModalState(() {}),
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(label: 'Текст', controllers: text),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        SizedBox(
-                          width: 220,
-                          child: TextField(
-                            controller: experienceId,
-                            decoration: const InputDecoration(
-                              labelText: 'experience_id',
-                              border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(
+                existing == null ? 'Новый буллет' : 'Редактировать буллет',
+              ),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RecordBaseFields(
+                        controllers: base,
+                        onChanged: () => setModalState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Текст', controllers: text),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          SizedBox(
+                            width: 220,
+                            child: TextField(
+                              controller: experienceId,
+                              decoration: const InputDecoration(
+                                labelText: 'experience_id',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 220,
-                          child: TextField(
-                            controller: projectId,
-                            decoration: const InputDecoration(
-                              labelText: 'project_id',
-                              border: OutlineInputBorder(),
+                          SizedBox(
+                            width: 220,
+                            child: TextField(
+                              controller: projectId,
+                              decoration: const InputDecoration(
+                                labelText: 'project_id',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final bulletText = text.build();
-                  if (!_hasContent(bulletText)) {
-                    setModalState(
-                      () => error = 'Текст буллета обязателен.',
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final bulletText = text.build();
+                    if (!_hasContent(bulletText)) {
+                      setModalState(() => error = 'Текст буллета обязателен.');
+                      return;
+                    }
+                    final bullet = Bullet(
+                      id: base.id.text.trim(),
+                      visible: base.visible,
+                      tags: _parseTags(base.tags.text),
+                      terms: base.terms.text.trim().isEmpty
+                          ? null
+                          : base.terms.text.trim(),
+                      text: bulletText,
+                      experienceId: experienceId.text.trim().isEmpty
+                          ? null
+                          : experienceId.text.trim(),
+                      projectId: projectId.text.trim().isEmpty
+                          ? null
+                          : projectId.text.trim(),
+                      version: existing?.version ?? 0,
                     );
-                    return;
-                  }
-                  final bullet = Bullet(
-                    id: base.id.text.trim(),
-                    visible: base.visible,
-                    tags: _parseTags(base.tags.text),
-                    terms: base.terms.text.trim().isEmpty
-                        ? null
-                        : base.terms.text.trim(),
-                    text: bulletText,
-                    experienceId: experienceId.text.trim().isEmpty
-                        ? null
-                        : experienceId.text.trim(),
-                    projectId: projectId.text.trim().isEmpty
-                        ? null
-                        : projectId.text.trim(),
-                    version: existing?.version ?? 0,
-                  );
-                  Navigator.pop(context, bullet);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        });
+                    Navigator.pop(context, bullet);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -1505,9 +1500,7 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
       tags: existing?.data.tags,
       terms: existing?.data.terms,
     );
-    final data = TextEditingController(
-      text: existing?.data.dataBase64 ?? '',
-    );
+    final data = TextEditingController(text: existing?.data.dataBase64 ?? '');
     final mime = TextEditingController(text: existing?.data.mime ?? '');
     final alt = LocalizedTextControllers(value: existing?.data.alt);
     String? error;
@@ -1515,85 +1508,85 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     return showDialog<MediaAsset>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return AlertDialog(
-            title: Text(
-              existing == null ? 'Новый медиа-актив' : 'Редактировать медиа',
-            ),
-            content: SizedBox(
-              width: 620,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RecordBaseFields(
-                      controllers: base,
-                      onChanged: () => setModalState(() {}),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: data,
-                      maxLines: 6,
-                      decoration: const InputDecoration(
-                        labelText: 'Base64 данные',
-                        border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(
+                existing == null ? 'Новый медиа-актив' : 'Редактировать медиа',
+              ),
+              content: SizedBox(
+                width: 620,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RecordBaseFields(
+                        controllers: base,
+                        onChanged: () => setModalState(() {}),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: mime,
-                      decoration: const InputDecoration(
-                        labelText: 'MIME',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    LocalizedFields(label: 'Alt', controllers: alt),
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: data,
+                        maxLines: 6,
+                        decoration: const InputDecoration(
+                          labelText: 'Base64 данные',
+                          border: OutlineInputBorder(),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: mime,
+                        decoration: const InputDecoration(
+                          labelText: 'MIME',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      LocalizedFields(label: 'Alt', controllers: alt),
+                      if (error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (data.text.trim().isEmpty) {
-                    setModalState(
-                      () => error = 'Base64 данные обязательны.',
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (data.text.trim().isEmpty) {
+                      setModalState(() => error = 'Base64 данные обязательны.');
+                      return;
+                    }
+                    final asset = MediaAsset(
+                      id: base.id.text.trim(),
+                      visible: base.visible,
+                      tags: _parseTags(base.tags.text),
+                      terms: base.terms.text.trim().isEmpty
+                          ? null
+                          : base.terms.text.trim(),
+                      dataBase64: data.text.trim(),
+                      mime: mime.text.trim().isEmpty ? null : mime.text.trim(),
+                      alt: alt.build(),
+                      version: existing?.version ?? 0,
                     );
-                    return;
-                  }
-                  final asset = MediaAsset(
-                    id: base.id.text.trim(),
-                    visible: base.visible,
-                    tags: _parseTags(base.tags.text),
-                    terms: base.terms.text.trim().isEmpty
-                        ? null
-                        : base.terms.text.trim(),
-                    dataBase64: data.text.trim(),
-                    mime: mime.text.trim().isEmpty ? null : mime.text.trim(),
-                    alt: alt.build(),
-                    version: existing?.version ?? 0,
-                  );
-                  Navigator.pop(context, asset);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        });
+                    Navigator.pop(context, asset);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -1604,153 +1597,162 @@ class _CareerLedgerHomeState extends State<CareerLedgerHome> {
     final idCtrl = TextEditingController(
       text: existing?.data.id ?? _newId('variant'),
     );
-    final nameCtrl =
-        TextEditingController(text: existing?.data.name ?? 'Новый вариант');
+    final nameCtrl = TextEditingController(
+      text: existing?.data.name ?? 'Новый вариант',
+    );
     Language lang = existing?.data.lang ?? Language.en;
     MediaMode mediaMode = existing?.data.mediaMode ?? MediaMode.full;
-    final defaultExclude =
-        TextEditingController(text: existing?.data.defaultExcludeTags.join(', '));
+    final defaultExclude = TextEditingController(
+      text: existing?.data.defaultExcludeTags.join(', '),
+    );
     final sectionForms = <SectionRuleForm>[
-      for (final rule in existing?.data.sections ?? [const SectionRule(type: SectionType.profile)])
+      for (final rule
+          in existing?.data.sections ??
+              [const SectionRule(type: SectionType.profile)])
         SectionRuleForm(rule),
     ];
     return showDialog<ResumeVariant>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setModalState) {
-          return AlertDialog(
-            title: Text(
-              existing == null
-                  ? 'Новый вариант резюме'
-                  : 'Редактировать вариант',
-            ),
-            content: SizedBox(
-              width: 760,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: idCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'ID варианта',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: nameCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Название',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        DropdownButton<Language>(
-                          value: lang,
-                          onChanged: (value) =>
-                              setModalState(() => lang = value ?? Language.en),
-                          items: Language.values
-                              .map(
-                                (v) => DropdownMenuItem(
-                                  value: v,
-                                  child: Text('Язык: ${v.name}'),
-                                ),
-                              )
-                              .toList(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: Text(
+                existing == null
+                    ? 'Новый вариант резюме'
+                    : 'Редактировать вариант',
+              ),
+              content: SizedBox(
+                width: 760,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: idCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'ID варианта',
+                          border: OutlineInputBorder(),
                         ),
-                        DropdownButton<MediaMode>(
-                          value: mediaMode,
-                          onChanged: (value) => setModalState(
-                            () => mediaMode = value ?? MediaMode.full,
-                          ),
-                          items: MediaMode.values
-                              .map(
-                                (v) => DropdownMenuItem(
-                                  value: v,
-                                  child: Text('Медиа: ${v.name}'),
-                                ),
-                              )
-                              .toList(),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Название',
+                          border: OutlineInputBorder(),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: defaultExclude,
-                      decoration: const InputDecoration(
-                        labelText: 'Исключить теги по умолчанию',
-                        border: OutlineInputBorder(),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Секции',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    for (var i = 0; i < sectionForms.length; i++)
-                      _SectionRuleCard(
-                        form: sectionForms[i],
-                        onChanged: () => setModalState(() {}),
-                        onRemove: sectionForms.length > 1
-                            ? () {
-                                setModalState(
-                                  () => sectionForms.removeAt(i),
-                                );
-                              }
-                            : null,
-                      ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        setModalState(
-                          () => sectionForms.add(
-                            SectionRuleForm(
-                              const SectionRule(type: SectionType.profile),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          DropdownButton<Language>(
+                            value: lang,
+                            onChanged: (value) => setModalState(
+                              () => lang = value ?? Language.en,
                             ),
+                            items: Language.values
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v,
+                                    child: Text('Язык: ${v.name}'),
+                                  ),
+                                )
+                                .toList(),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Добавить секцию'),
-                    ),
-                  ],
+                          DropdownButton<MediaMode>(
+                            value: mediaMode,
+                            onChanged: (value) => setModalState(
+                              () => mediaMode = value ?? MediaMode.full,
+                            ),
+                            items: MediaMode.values
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v,
+                                    child: Text('Медиа: ${v.name}'),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: defaultExclude,
+                        decoration: const InputDecoration(
+                          labelText: 'Исключить теги по умолчанию',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Секции',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      for (var i = 0; i < sectionForms.length; i++)
+                        _SectionRuleCard(
+                          form: sectionForms[i],
+                          onChanged: () => setModalState(() {}),
+                          onRemove: sectionForms.length > 1
+                              ? () {
+                                  setModalState(() => sectionForms.removeAt(i));
+                                }
+                              : null,
+                        ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setModalState(
+                            () => sectionForms.add(
+                              SectionRuleForm(
+                                const SectionRule(type: SectionType.profile),
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Добавить секцию'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final sections = sectionForms.map((form) => form.toRule()).toList();
-                  final variant = ResumeVariant(
-                    id: idCtrl.text.trim().isEmpty
-                        ? _newId('variant')
-                        : idCtrl.text.trim(),
-                    name: nameCtrl.text.trim().isEmpty
-                        ? null
-                        : nameCtrl.text.trim(),
-                    lang: lang,
-                    mediaMode: mediaMode,
-                    defaultExcludeTags: _parseTags(defaultExclude.text),
-                    sections: sections,
-                  );
-                  Navigator.pop(context, variant);
-                },
-                child: const Text('Сохранить'),
-              ),
-            ],
-          );
-        });
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final sections = sectionForms
+                        .map((form) => form.toRule())
+                        .toList();
+                    final variant = ResumeVariant(
+                      id: idCtrl.text.trim().isEmpty
+                          ? _newId('variant')
+                          : idCtrl.text.trim(),
+                      name: nameCtrl.text.trim().isEmpty
+                          ? null
+                          : nameCtrl.text.trim(),
+                      lang: lang,
+                      mediaMode: mediaMode,
+                      defaultExcludeTags: _parseTags(defaultExclude.text),
+                      sections: sections,
+                    );
+                    Navigator.pop(context, variant);
+                  },
+                  child: const Text('Сохранить'),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
   }
@@ -1774,10 +1776,10 @@ class RecordFormControllers {
     bool visible = true,
     List<String>? tags,
     String? terms,
-  })  : id = TextEditingController(text: id),
-        visible = visible,
-        tags = TextEditingController(tags?.join(', ') ?? ''),
-        terms = TextEditingController(terms ?? '');
+  }) : id = TextEditingController(text: id),
+       visible = visible,
+       tags = TextEditingController(text: tags?.join(', ') ?? ''),
+       terms = TextEditingController(text: terms ?? '');
 
   final TextEditingController id;
   final TextEditingController tags;
@@ -1850,16 +1852,16 @@ class RecordBaseFields extends StatelessWidget {
 
 class LocalizedTextControllers {
   LocalizedTextControllers({LocalizedText? value})
-      : en = TextEditingController(text: value?.en ?? ''),
-        ru = TextEditingController(text: value?.ru ?? '');
+    : en = TextEditingController(text: value?.en ?? ''),
+      ru = TextEditingController(text: value?.ru ?? '');
 
   final TextEditingController en;
   final TextEditingController ru;
 
   LocalizedText build() => LocalizedText(
-        en: en.text.trim().isEmpty ? null : en.text.trim(),
-        ru: ru.text.trim().isEmpty ? null : ru.text.trim(),
-      );
+    en: en.text.trim().isEmpty ? null : en.text.trim(),
+    ru: ru.text.trim().isEmpty ? null : ru.text.trim(),
+  );
 }
 
 class LocalizedFields extends StatelessWidget {
@@ -1950,16 +1952,16 @@ class _CollectionListState<T> extends State<_CollectionList<T>> {
     try {
       await widget.collection.upsert(model);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Сохранено')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Сохранено')));
       }
       _refresh();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка сохранения: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка сохранения: $error')));
       }
     }
   }
@@ -1968,16 +1970,16 @@ class _CollectionListState<T> extends State<_CollectionList<T>> {
     try {
       await widget.collection.delete(widget.idSelector(item.data));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Удалено')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Удалено')));
       }
       _refresh();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка удаления: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка удаления: $error')));
       }
     }
   }
@@ -1992,8 +1994,10 @@ class _CollectionListState<T> extends State<_CollectionList<T>> {
             children: [
               Text(
                 widget.title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const Spacer(),
               IconButton(
@@ -2039,8 +2043,9 @@ class _CollectionListState<T> extends State<_CollectionList<T>> {
                     return Card(
                       child: ListTile(
                         title: Text(title),
-                        subtitle:
-                            subtitle == null || subtitle.isEmpty ? null : Text(subtitle),
+                        subtitle: subtitle == null || subtitle.isEmpty
+                            ? null
+                            : Text(subtitle),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -2128,7 +2133,9 @@ class _ResumeBuilderState extends State<_ResumeBuilder> {
               }
               final variants = snapshot.data ?? [];
               if (variants.isEmpty) {
-                return const Text('Создайте вариант резюме в соседней вкладке.');
+                return const Text(
+                  'Создайте вариант резюме в соседней вкладке.',
+                );
               }
               _selectedVariant ??= variants.first.data.id;
               return DropdownButton<String>(
@@ -2181,8 +2188,9 @@ class _ResumeBuilderState extends State<_ResumeBuilder> {
       final response = await widget.caller.generateResume(
         GenerateResumeRequest(variantId: variantId),
       );
-      final jsonText = const JsonEncoder.withIndent('  ')
-          .convert(response.resume.toJson());
+      final jsonText = const JsonEncoder.withIndent(
+        '  ',
+      ).convert(response.resume.toJson());
       setState(() => _result = jsonText);
     } catch (error) {
       if (mounted) {
@@ -2198,12 +2206,12 @@ class _ResumeBuilderState extends State<_ResumeBuilder> {
 
 class SectionRuleForm {
   SectionRuleForm(SectionRule rule)
-      : type = rule.type,
-        includeTags = TextEditingController(rule.includeTags.join(', ')),
-        excludeTags = TextEditingController(rule.excludeTags.join(', ')),
-        limit = TextEditingController(rule.limit?.toString() ?? ''),
-        sortField = TextEditingController(rule.sort?.field ?? ''),
-        descending = rule.sort?.descending ?? false;
+    : type = rule.type,
+      includeTags = TextEditingController(text: rule.includeTags.join(', ')),
+      excludeTags = TextEditingController(text: rule.excludeTags.join(', ')),
+      limit = TextEditingController(text: rule.limit?.toString() ?? ''),
+      sortField = TextEditingController(text: rule.sort?.field ?? ''),
+      descending = rule.sort?.descending ?? false;
 
   SectionType type;
   final TextEditingController includeTags;
@@ -2259,10 +2267,7 @@ class _SectionRuleCard extends StatelessWidget {
                   },
                   items: SectionType.values
                       .map(
-                        (v) => DropdownMenuItem(
-                          value: v,
-                          child: Text(v.name),
-                        ),
+                        (v) => DropdownMenuItem(value: v, child: Text(v.name)),
                       )
                       .toList(),
                 ),
