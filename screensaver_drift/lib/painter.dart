@@ -31,6 +31,7 @@ class DriftFinalPainter extends CustomPainter {
     this.drawBackground = true,
     this.backgroundColor = const Color(0xFF000000),
     List<Color>? palette,
+    this.bulgeScale = 0.35,
 
     // геометрия
     this.L0 = 1.5,
@@ -61,8 +62,8 @@ class DriftFinalPainter extends CustomPainter {
     // “дырки” по высоте (опционально)
     this.heightCut = 0.02,
     this.heightCutFeather = 0.10,
-  })  : palette = palette ?? defaultPalette,
-        super(repaint: repaint) {
+  }) : palette = palette ?? defaultPalette,
+       super(repaint: repaint) {
     _initBatchBuffers();
   }
 
@@ -92,6 +93,8 @@ class DriftFinalPainter extends CustomPainter {
 
   /// Палитра для градиента по высоте (5 точек).
   final List<Color> palette;
+  // Факториальный множитель по bulge для длины.
+  final double bulgeScale;
 
   /// Базовая длина (L0), добавка от height (L1), гамма height и усиление наклона.
   final double L0;
@@ -187,10 +190,14 @@ class DriftFinalPainter extends CustomPainter {
     final flowX = f.flowX;
     final flowY = f.flowY;
     final height = f.height;
+    final bulgeField = f.bulge;
 
     final n = fieldW * fieldH;
     if (fieldW <= 1 || fieldH <= 1) return;
-    if (flowX.length < n || flowY.length < n || height.length < n) return;
+    if (flowX.length < n ||
+        flowY.length < n ||
+        height.length < n ||
+        bulgeField.length < n) return;
 
     if (drawBackground) {
       canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
@@ -248,6 +255,9 @@ class DriftFinalPainter extends CustomPainter {
         ).clamp(0.0, 1.0);
         hh = math.pow(hh, gamma).toDouble();
 
+        var bb = _sampleBilinear(bulgeField, fieldW, fieldH, u0, v0).clamp(0.0, 1.0);
+        bb = _smoothstep(0.0, 1.0, bb);
+
         // optional: height-based holes
         final hMask = _smoothstep(heightCut, heightCut + heightCutFeather, hh);
 
@@ -286,7 +296,7 @@ class DriftFinalPainter extends CustomPainter {
         }
 
         // “height” as vertical z (L)
-        final L = (L0 + L1 * hh);
+        final L = (L0 + L1 * hh) * (1.0 + bulgeScale * (bb - 0.5));
 
         // scale along dir so that vertical component corresponds to L
         var s = L / vz;
@@ -443,7 +453,8 @@ class DriftFinalPainter extends CustomPainter {
         old.specularK != specularK ||
         old.shininess != shininess ||
         old.heightCut != heightCut ||
-        old.heightCutFeather != heightCutFeather;
+        old.heightCutFeather != heightCutFeather ||
+        old.bulgeScale != bulgeScale;
   }
 
   static double _sampleBilinear(

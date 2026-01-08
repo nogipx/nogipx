@@ -115,6 +115,12 @@ class DriftFieldFrame implements IRpcSerializable {
   /// - codec: Uint8List / List<int>
   final Object height;
 
+  /// Float32 (w*h) — дополнительное поле “bulge” для вариации длины.
+  /// Тип зависит от RpcDataTransferMode:
+  /// - zeroCopy: TransferableTypedData
+  /// - codec: Uint8List / List<int>
+  final Object bulge;
+
   const DriftFieldFrame({
     required this.w,
     required this.h,
@@ -122,17 +128,19 @@ class DriftFieldFrame implements IRpcSerializable {
     required this.flowX,
     required this.flowY,
     required this.height,
+    required this.bulge,
   });
 
   @override
   Map<String, dynamic> toJson() => {
-    'w': w,
-    'h': h,
-    't': t,
-    'flowX': _encodeBytes(flowX),
-    'flowY': _encodeBytes(flowY),
-    'height': _encodeBytes(height),
-  };
+        'w': w,
+        'h': h,
+        't': t,
+        'flowX': _encodeBytes(flowX),
+        'flowY': _encodeBytes(flowY),
+        'height': _encodeBytes(height),
+        'bulge': _encodeBytes(bulge),
+      };
 
   factory DriftFieldFrame.fromJson(Map<String, dynamic> json) {
     Uint8List b64(String key) => _decodeBytes(json[key]!);
@@ -143,6 +151,7 @@ class DriftFieldFrame implements IRpcSerializable {
       flowX: b64('flowX'),
       flowY: b64('flowY'),
       height: b64('height'),
+      bulge: b64('bulge'),
     );
   }
 

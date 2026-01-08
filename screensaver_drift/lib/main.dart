@@ -100,6 +100,7 @@ class _MyAppState extends State<MyApp> {
                   drawBackground: _painterSettings.drawBackground,
                   backgroundColor: _painterSettings.backgroundColor,
                   palette: _painterSettings.palette,
+                  bulgeScale: _painterSettings.bulgeScale,
                   repaint: _lastFrame,
                   getFrame: () => frame,
                 ),
@@ -135,6 +136,7 @@ class PainterSettings {
     required this.drawBackground,
     required this.backgroundColor,
     required this.palette,
+    required this.bulgeScale,
   });
 
   final double baseAlpha;
@@ -158,6 +160,7 @@ class PainterSettings {
   final bool drawBackground;
   final Color backgroundColor;
   final List<Color> palette;
+  final double bulgeScale;
 
   factory PainterSettings.driftDefault() => const PainterSettings(
     baseAlpha: 0.78,
@@ -181,6 +184,7 @@ class PainterSettings {
     drawBackground: true,
     backgroundColor: Color(0xFF06070D),
     palette: DriftFinalPainter.defaultPalette,
+    bulgeScale: 0.35,
   );
 
   factory PainterSettings.random(Random rng) {
@@ -208,6 +212,7 @@ class PainterSettings {
       drawBackground: true,
       backgroundColor: const Color(0xFF06070D),
       palette: _randomPalette(rng),
+      bulgeScale: lerp(0.2, 0.55),
     );
   }
 

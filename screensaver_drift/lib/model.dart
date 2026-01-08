@@ -12,6 +12,7 @@ class DriftFrameData with EquatableMixin {
   final Float32List flowX;
   final Float32List flowY;
   final Float32List height;
+  final Float32List bulge;
 
   const DriftFrameData({
     required this.w,
@@ -20,6 +21,7 @@ class DriftFrameData with EquatableMixin {
     required this.flowX,
     required this.flowY,
     required this.height,
+    required this.bulge,
   });
 
   @override
@@ -33,6 +35,7 @@ class DriftFrameData with EquatableMixin {
       flowX: Float32List(0),
       flowY: Float32List(0),
       height: Float32List(0),
+      bulge: Float32List(0),
     );
   }
   factory DriftFrameData.fromRawFrame(DriftFieldFrame frame) {
@@ -43,6 +46,7 @@ class DriftFrameData with EquatableMixin {
       flowX: DriftWorkerClient.materializeF32(frame.flowX),
       flowY: DriftWorkerClient.materializeF32(frame.flowY),
       height: DriftWorkerClient.materializeF32(frame.height),
+      bulge: DriftWorkerClient.materializeF32(frame.bulge),
     );
   }
 }

@@ -54,6 +54,8 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
     final height = Float32List(n);
     final rho = Float32List(n); // advected density (“breathing voids”)
     final rhoTmp = Float32List(n);
+    final bulge = Float32List(n);
+    final bulgeTmp = Float32List(n);
 
     final dt = 1.0 / max(1, request.fps);
     var t = 0.0;
@@ -66,10 +68,22 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
         return;
       }
 
-      _fillFields(request, t, dt, psi, flowX, flowY, rho, rhoTmp, height);
+      _fillFields(
+        request,
+        t,
+        dt,
+        psi,
+        flowX,
+        flowY,
+        rho,
+        rhoTmp,
+        height,
+        bulge,
+        bulgeTmp,
+      );
 
-      final mode = dataTransferMode ?? RpcDataTransferMode.zeroCopy;
-      yield _buildFrame(mode, w, h, t, flowX, flowY, height);
+      final mode = dataTransferMode;
+      yield _buildFrame(mode, w, h, t, flowX, flowY, height, bulge);
 
       t += dt;
       await Future<void>.delayed(Duration(microseconds: (dt * 1e6).round()));
@@ -85,6 +99,7 @@ DriftFieldFrame _buildFrame(
   Float32List flowX,
   Float32List flowY,
   Float32List height,
+  Float32List bulge,
 ) {
   Object pack(Float32List src) {
     if (mode == RpcDataTransferMode.zeroCopy) {
@@ -100,6 +115,7 @@ DriftFieldFrame _buildFrame(
     flowX: pack(flowX),
     flowY: pack(flowY),
     height: pack(height),
+    bulge: pack(bulge),
   );
 }
 
@@ -117,6 +133,8 @@ void _fillFields(
   Float32List rho,
   Float32List rhoTmp,
   Float32List hOut,
+  Float32List bulge,
+  Float32List bulgeTmp,
 ) {
   final w = req.w;
   final h = req.h;
@@ -129,8 +147,10 @@ void _fillFields(
   final slideX = t * req.speedX * 0.6;
   final slideY = t * req.speedY * 0.6;
   // Быстрее меняющееся направление ветра.
-  final dirX = math.cos(t * 0.18 + phase) + 0.4 * math.sin(t * 0.55 + phase * 1.3);
-  final dirY = math.sin(t * 0.21 + phase * 0.7) + 0.4 * math.cos(t * 0.47 + phase * 1.1);
+  final dirX =
+      math.cos(t * 0.18 + phase) + 0.4 * math.sin(t * 0.55 + phase * 1.3);
+  final dirY =
+      math.sin(t * 0.21 + phase * 0.7) + 0.4 * math.cos(t * 0.47 + phase * 1.1);
   final windDir = _normalize(dirX, dirY, fallbackX: 0.8, fallbackY: -0.6);
   final windStrength = 1.15;
   // Движущийся порыв чаще меняет положение.
@@ -139,6 +159,7 @@ void _fillFields(
   const gustStrength = 0.9;
 
   double sourceSum = 0.0;
+  double bulgeSrcSum = 0.0;
   for (var y = 0; y < h; y++) {
     for (var x = 0; x < w; x++) {
       final i = y * w + x;
@@ -174,11 +195,17 @@ void _fillFields(
       // Поток: линейный ветер (curl от линейной фазы) + curl noise.
       final psiLinear = windStrength * (windDir.x * fy - windDir.y * fx);
       final psiCurlLow = _fbm3(px * 0.7, py * 0.6, tzPsi * 0.8, req.seed ^ 17);
-      final psiCurlHi = _fbm3(px * 1.6, py * 1.3, tzPsi * 1.4 + 9.1, req.seed ^ 911);
+      final psiCurlHi = _fbm3(
+        px * 1.6,
+        py * 1.3,
+        tzPsi * 1.4 + 9.1,
+        req.seed ^ 911,
+      );
       final gx = ((x / w) - gustCX) * 2.0;
       final gy = ((y / h) - gustCY) * 2.0;
       final psiGust = _windPotential(gx, gy, gustStrength);
-      final psi = psiLinear +
+      final psi =
+          psiLinear +
           psiCurlLow * 0.40 +
           psiCurlHi * (0.22 + 0.08 * math.sin(t * 0.37)) +
           psiGust * 0.65;
@@ -187,9 +214,17 @@ void _fillFields(
       psiOut[i] = psi;
 
       // Source/stoke for density (zero-mean breathing).
-      final src = _fbm3(px * 0.35, py * 0.35, tzPhi * 1.3, req.seed ^ 0xDEADBEEF) - 0.5;
+      final src =
+          _fbm3(px * 0.35, py * 0.35, tzPhi * 1.3, req.seed ^ 0xDEADBEEF) - 0.5;
       sourceSum += src;
       rhoTmp[i] = src;
+
+      // Независимое “bulge” поле для длины волосков (равномерное, пузырящееся).
+      final bsrc =
+          _fbm3(px * 0.22, py * 0.22, tzPhi * 1.1 + 13.7, req.seed ^ 0x12345) -
+          0.5;
+      bulgeSrcSum += bsrc;
+      bulgeTmp[i] = bsrc;
     }
   }
 
@@ -219,11 +254,17 @@ void _fillFields(
       final backX = wrap(x.toDouble() - vx * dt * w, w.toDouble());
       final backY = wrap(y.toDouble() - vy * dt * h, h.toDouble());
       final adv = _sampleBilinearWrap(rho, w, h, backX / w, backY / h);
+      final advB = _sampleBilinearWrap(bulge, w, h, backX / w, backY / h);
 
       var r = adv * dissipation + rhoTmp[i] * 0.18 + 0.5 * (1 - dissipation);
       if (r < 0) r = 0;
       if (r > 1) r = 1;
       rhoTmp[i] = r;
+
+      var b = advB * 0.995 + bulgeTmp[i] * 0.12 + 0.5 * 0.005;
+      if (b < 0) b = 0;
+      if (b > 1) b = 1;
+      bulgeTmp[i] = b;
     }
   }
 
@@ -231,6 +272,7 @@ void _fillFields(
   for (var i = 0; i < rho.length; i++) {
     rho[i] = rhoTmp[i];
     hOut[i] = math.pow(rho[i], 1.2).toDouble();
+    bulge[i] = bulgeTmp[i];
   }
 }
 
@@ -356,13 +398,7 @@ double _smooth01(double v) {
   return x * x * (3.0 - 2.0 * x);
 }
 
-double _sampleBilinearWrap(
-  Float32List g,
-  int w,
-  int h,
-  double u,
-  double v,
-) {
+double _sampleBilinearWrap(Float32List g, int w, int h, double u, double v) {
   // u,v in [0,1), wrap around edges
   u = u % 1.0;
   v = v % 1.0;
@@ -402,8 +438,12 @@ double _windPotential(double x, double y, double strength) {
   return strength * falloff * ang;
 }
 
-({double x, double y}) _normalize(double x, double y,
-    {double fallbackX = 1.0, double fallbackY = 0.0}) {
+({double x, double y}) _normalize(
+  double x,
+  double y, {
+  double fallbackX = 1.0,
+  double fallbackY = 0.0,
+}) {
   final len2 = x * x + y * y;
   if (len2 < 1e-6) {
     final inv = 1.0 / math.sqrt(fallbackX * fallbackX + fallbackY * fallbackY);
