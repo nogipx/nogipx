@@ -128,13 +128,15 @@ void _fillFields(
   final tzPhi = t * 0.08 + phase * 0.7; // breathing potential (very low freq)
   final slideX = t * req.speedX * 0.6;
   final slideY = t * req.speedY * 0.6;
-  final windDir = _normalize(
-    req.speedX + math.sin(t * 0.17) * 0.4,
-    req.speedY + math.cos(t * 0.13) * 0.4,
-    fallbackX: 0.8,
-    fallbackY: -0.6,
-  );
+  // Быстрее меняющееся направление ветра.
+  final dirX = math.cos(t * 0.18 + phase) + 0.4 * math.sin(t * 0.55 + phase * 1.3);
+  final dirY = math.sin(t * 0.21 + phase * 0.7) + 0.4 * math.cos(t * 0.47 + phase * 1.1);
+  final windDir = _normalize(dirX, dirY, fallbackX: 0.8, fallbackY: -0.6);
   final windStrength = 1.15;
+  // Движущийся порыв чаще меняет положение.
+  final gustCX = 0.5 + 0.38 * math.sin(t * 0.32 + phase * 2.1);
+  final gustCY = 0.5 + 0.38 * math.cos(t * 0.29 + phase * 1.9);
+  const gustStrength = 0.9;
 
   double sourceSum = 0.0;
   for (var y = 0; y < h; y++) {
@@ -173,9 +175,13 @@ void _fillFields(
       final psiLinear = windStrength * (windDir.x * fy - windDir.y * fx);
       final psiCurlLow = _fbm3(px * 0.7, py * 0.6, tzPsi * 0.8, req.seed ^ 17);
       final psiCurlHi = _fbm3(px * 1.6, py * 1.3, tzPsi * 1.4 + 9.1, req.seed ^ 911);
+      final gx = ((x / w) - gustCX) * 2.0;
+      final gy = ((y / h) - gustCY) * 2.0;
+      final psiGust = _windPotential(gx, gy, gustStrength);
       final psi = psiLinear +
           psiCurlLow * 0.40 +
-          psiCurlHi * (0.22 + 0.08 * math.sin(t * 0.37));
+          psiCurlHi * (0.22 + 0.08 * math.sin(t * 0.37)) +
+          psiGust * 0.65;
 
       // Маленькая grad-компонента (compressible) из phi — для “дыхания”.
       psiOut[i] = psi;
@@ -204,9 +210,15 @@ void _fillFields(
       final vx = flowX[i];
       final vy = flowY[i];
 
-      final backX = (x.toDouble() - vx * dt * w).clamp(0.0, w - 1.0);
-      final backY = (y.toDouble() - vy * dt * h).clamp(0.0, h - 1.0);
-      final adv = _sampleBilinear(rho, w, h, backX / (w - 1), backY / (h - 1));
+      double wrap(double v, double max) {
+        v %= max;
+        if (v < 0) v += max;
+        return v;
+      }
+
+      final backX = wrap(x.toDouble() - vx * dt * w, w.toDouble());
+      final backY = wrap(y.toDouble() - vy * dt * h, h.toDouble());
+      final adv = _sampleBilinearWrap(rho, w, h, backX / w, backY / h);
 
       var r = adv * dissipation + rhoTmp[i] * 0.18 + 0.5 * (1 - dissipation);
       if (r < 0) r = 0;
@@ -240,8 +252,8 @@ void _psiToDivergenceFreeFlow(
       ? y - h
       : y;
 
-  const flowAmp = 1.6; // мягче, но без статики
-  const flowClamp = .48; // защита от выбросов
+  const flowAmp = 1.8; // немного сильнее, чтобы чувствовать порывы
+  const flowClamp = .52; // защита от выбросов
 
   for (var y = 0; y < h; y++) {
     final ym = iy(y - 1);
@@ -344,23 +356,26 @@ double _smooth01(double v) {
   return x * x * (3.0 - 2.0 * x);
 }
 
-double _sampleBilinear(
+double _sampleBilinearWrap(
   Float32List g,
   int w,
   int h,
   double u,
   double v,
 ) {
-  u = u.clamp(0.0, 1.0);
-  v = v.clamp(0.0, 1.0);
+  // u,v in [0,1), wrap around edges
+  u = u % 1.0;
+  v = v % 1.0;
+  if (u < 0) u += 1.0;
+  if (v < 0) v += 1.0;
 
-  final x = u * (w - 1);
-  final y = v * (h - 1);
+  final x = u * w;
+  final y = v * h;
 
-  final x0 = x.floor();
-  final y0 = y.floor();
-  final x1 = (x0 + 1).clamp(0, w - 1);
-  final y1 = (y0 + 1).clamp(0, h - 1);
+  final x0 = x.floor() % w;
+  final y0 = y.floor() % h;
+  final x1 = (x0 + 1) % w;
+  final y1 = (y0 + 1) % h;
 
   final tx = x - x0;
   final ty = y - y0;
