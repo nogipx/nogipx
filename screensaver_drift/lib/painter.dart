@@ -257,6 +257,8 @@ class DriftFinalPainter extends CustomPainter {
 
         var bb = _sampleBilinear(bulgeField, fieldW, fieldH, u0, v0).clamp(0.0, 1.0);
         bb = _smoothstep(0.0, 1.0, bb);
+        // pulse в 0..1: используем прямо для заметной модуляции.
+        final pulse = bb;
 
         // optional: height-based holes
         final hMask = _smoothstep(heightCut, heightCut + heightCutFeather, hh);
@@ -270,11 +272,10 @@ class DriftFinalPainter extends CustomPainter {
         vy *= inv;
         vz *= inv;
         vz = vz.clamp(tiltZFloor, 1.0);
+        final tiltVis = (1.0 - vz).clamp(0.0, 1.0);
 
-        // tilt visibility: скрываем почти вертикальные, усиливаем наклонённые
-        final tilt = (1.0 - vz).clamp(0.0, 1.0);
-        final tiltAlpha = _smoothstep(0.02, 0.32, tilt);
-        var alpha = (baseAlpha * tiltAlpha * hMask).clamp(0.0, 1.0);
+        // Наклон влияет только на геометрию; яркость/альфа — нет.
+        var alpha = (baseAlpha * (0.9 + pulse * 2.2) * hMask).clamp(0.0, 1.0);
 
         final vBase = b * 4;
         final pBase = vBase * 2;
@@ -296,7 +297,7 @@ class DriftFinalPainter extends CustomPainter {
         }
 
         // “height” as vertical z (L)
-        final L = (L0 + L1 * hh) * (1.0 + bulgeScale * (bb - 0.5));
+        final L = (L0 + L1 * hh) * (0.9 + pulse * (2.0 + bulgeScale));
 
         // scale along dir so that vertical component corresponds to L
         var s = L / vz;
@@ -386,11 +387,11 @@ class DriftFinalPainter extends CustomPainter {
         hzv *= hInv;
 
         final specBase = math.max(0.0, nx * hxv + ny * hyv + nz * hzv);
-        final spec = math.pow(specBase, shininess).toDouble();
-
-        var shade = (ambient + diffuseK * diff + specularK * spec);
-        shade *= 1.0 + tilt * tiltBrightnessGain;
-        shade = shade.clamp(0.0, 3.0);
+        // Убираем белые блики: spec отключаем, диффузное + амбиент только.
+        var shade = (ambient + diffuseK * diff);
+        shade *= (0.8 + pulse * 1.0);
+        shade *= (1.0 - tiltVis * 0.35); // приглушаем наклонённые
+        shade = shade.clamp(0.0, 1.0); // оставляем только цвета палитры без высветления
 
         final base = _palette(hh);
 
@@ -566,11 +567,10 @@ class DriftFinalPainter extends CustomPainter {
   }
 
   static const List<Color> defaultPalette = [
-    Color(0xFF081026), // deep navy
-    Color(0xFF0E6BFF), // electric blue
-    Color(0xFF2DE0C9), // aqua
-    Color(0xFFF971D2), // pink
-    Color(0xFFFFB86C), // amber
+    Color(0xFF025BFE), // flutter blue
+    Color(0xFF00C4B3), // teal accent
+    Color(0xFF7B61FF), // purple accent
+    Color(0xFFE3F2FD), // light sky
   ];
 }
 

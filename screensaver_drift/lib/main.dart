@@ -211,7 +211,7 @@ class PainterSettings {
       projY: lerp(0.85, 0.98),
       drawBackground: true,
       backgroundColor: const Color(0xFF06070D),
-      palette: _randomPalette(rng),
+      palette: _flutterPalette(rng),
       bulgeScale: lerp(0.2, 0.55),
     );
   }
@@ -240,52 +240,38 @@ class PainterSettings {
       projY: lerp(0.86, 0.95),
       drawBackground: true,
       backgroundColor: const Color(0xFF06070D),
-      palette: _randomPalette(rng),
+      palette: _flutterPalette(rng),
       bulgeScale: lerp(0.4, 0.8),
     );
   }
 
-  static List<Color> _randomPalette(Random rng) {
-    double clamp01(double v) => v.clamp(0.0, 1.0);
-    double hueWrap(double h) {
-      h %= 360.0;
-      if (h < 0) h += 360.0;
-      return h;
-    }
-
-    final baseHue = rng.nextDouble() * 360.0;
-    final sat = clamp01(0.60 + rng.nextDouble() * 0.25);
-    final lightBase = clamp01(0.35 + rng.nextDouble() * 0.25);
-
-    // Выбираем схему: 0 — аналогичная, 1 — триада.
-    final scheme = rng.nextBool() ? 0 : 1;
-    List<double> hues;
-    if (scheme == 0) {
-      // аналогичная
-      final spread = 25 + rng.nextDouble() * 15;
-      hues = [
-        baseHue,
-        hueWrap(baseHue + spread),
-        hueWrap(baseHue - spread),
-        hueWrap(baseHue + spread * 1.6),
-      ];
-    } else {
-      // триада
-      hues = [
-        baseHue,
-        hueWrap(baseHue + 120),
-        hueWrap(baseHue - 120),
-        hueWrap(baseHue + 180),
-      ];
-    }
-
-    // Лёгкая вариация яркости внутри палитры.
-    List<Color> colors = [];
-    for (int i = 0; i < hues.length; i++) {
-      final t = i / (hues.length - 1).clamp(1, 10);
-      final l = clamp01(lightBase + (0.18 * t) - 0.06 * rng.nextDouble());
-      colors.add(HSLColor.fromAHSL(1.0, hues[i], sat, l).toColor());
-    }
-    return colors;
+  static List<Color> _flutterPalette(Random rng) {
+    const presets = [
+      [
+        Color(0xFF025BFE), // flutter blue
+        Color(0xFF00C4B3), // teal accent
+        Color(0xFF7B61FF), // purple accent
+        Color(0xFFE3F2FD), // light sky
+      ],
+      [
+        Color(0xFF0175C2), // flutter blue primary
+        Color(0xFF13B9FD), // cyan accent
+        Color(0xFF5CE1E6), // aqua
+        Color(0xFFFFD166), // warm accent
+      ],
+      [
+        Color(0xFF0F172A), // near black
+        Color(0xFF1E293B), // slate
+        Color(0xFF38BDF8), // sky blue
+        Color(0xFF5C7CFA), // indigo accent
+      ],
+      [
+        Color(0xFF111827), // dark slate
+        Color(0xFF2563EB), // blue
+        Color(0xFF22D3EE), // cyan
+        Color(0xFF60F6D2), // mint
+      ],
+    ];
+    return presets[rng.nextInt(presets.length)];
   }
 }

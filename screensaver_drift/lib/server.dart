@@ -138,25 +138,31 @@ void _fillFields(
 ) {
   final w = req.w;
   final h = req.h;
+  final n = w * h;
 
-  // Divergence-free поток: глобальное “ветровое” направление + curl-noise.
   final phase = req.seed * 0.011;
   final tzPsi = t * 0.30 + phase;
   final tzWarp = t * 0.18 + phase * 1.3;
-  final tzPhi = t * 0.08 + phase * 0.7; // breathing potential (very low freq)
-  final slideX = t * req.speedX * 0.75;
-  final slideY = t * req.speedY * 0.75;
-  // Более быстрый и хаотичный ветер.
-  final dirX =
-      math.cos(t * 0.32 + phase) + 0.55 * math.sin(t * 0.72 + phase * 1.4);
-  final dirY =
-      math.sin(t * 0.29 + phase * 0.8) + 0.55 * math.cos(t * 0.63 + phase * 1.2);
+  final tzPhi = t * (req.pattern == 1 ? 0.25 : 0.08) + phase * 0.7;
+  final isPulsate = req.pattern == 1;
+
+  final slideX = t * req.speedX * (isPulsate ? 0.20 : 0.75);
+  final slideY = t * req.speedY * (isPulsate ? 0.20 : 0.75);
+  // Более быстрый и хаотичный ветер или мягкие пульсации.
+  final dirX = isPulsate
+      ? math.cos(t * 0.15 + phase)
+      : math.cos(t * 0.32 + phase) + 0.55 * math.sin(t * 0.72 + phase * 1.4);
+  final dirY = isPulsate
+      ? math.sin(t * 0.17 + phase * 0.8)
+      : math.sin(t * 0.29 + phase * 0.8) + 0.55 * math.cos(t * 0.63 + phase * 1.2);
   final windDir = _normalize(dirX, dirY, fallbackX: 0.8, fallbackY: -0.6);
-  final windStrength = 1.05 + 0.4 * math.sin(t * 0.52 + phase * 0.9);
-  // Движущийся порыв меняет положение быстрее.
-  final gustCX = 0.5 + 0.40 * math.sin(t * 0.55 + phase * 2.1);
-  final gustCY = 0.5 + 0.40 * math.cos(t * 0.50 + phase * 1.9);
-  const gustStrength = 0.9;
+  final windStrength = isPulsate
+      ? (0.35 + 0.55 * math.sin(t * 0.9 + phase * 0.8))
+      : (1.05 + 0.4 * math.sin(t * 0.52 + phase * 0.9));
+  // Движущийся порыв: выключен в пульс режиме.
+  final gustCX = isPulsate ? 0.5 : 0.5 + 0.40 * math.sin(t * 0.55 + phase * 2.1);
+  final gustCY = isPulsate ? 0.5 : 0.5 + 0.40 * math.cos(t * 0.50 + phase * 1.9);
+  final gustStrength = isPulsate ? 0.0 : 0.9;
 
   double sourceSum = 0.0;
   double bulgeSrcSum = 0.0;
@@ -168,21 +174,22 @@ void _fillFields(
       final fy = y.toDouble();
 
       // 3D domain warp (слабый, чтобы избежать сеточных артефактов).
+      final warpScale = isPulsate ? 0.06 : 0.12;
       final wx = _fbm3(
-        (fx + slideX) * req.warpFreq * 0.12,
-        (fy + slideY) * req.warpFreq * 0.12,
+        (fx + slideX) * req.warpFreq * warpScale,
+        (fy + slideY) * req.warpFreq * warpScale,
         tzWarp,
         req.seed ^ 0xA341316C,
       );
       final wy = _fbm3(
-        (fx + 37.0 + slideX) * req.warpFreq * 0.12,
-        (fy - 11.0 + slideY) * req.warpFreq * 0.12,
+        (fx + 37.0 + slideX) * req.warpFreq * warpScale,
+        (fy - 11.0 + slideY) * req.warpFreq * warpScale,
         tzWarp + 11.0,
         req.seed ^ 0xC8013EA4,
       );
 
-      final dx = (wx - 0.5) * req.warpAmp * 0.32;
-      final dy = (wy - 0.5) * req.warpAmp * 0.32;
+      final dx = (wx - 0.5) * req.warpAmp * (isPulsate ? 0.20 : 0.32);
+      final dy = (wy - 0.5) * req.warpAmp * (isPulsate ? 0.20 : 0.32);
 
       // Глобальный drift по скорости.
       final driftX = t * req.speedX * 0.35;
@@ -192,36 +199,45 @@ void _fillFields(
       final px = (fx + dx + driftX + t * 0.22) * req.baseFreq;
       final py = (fy + dy + driftY + t * 0.27) * req.baseFreq;
 
-      // Поток: линейный ветер (curl от линейной фазы) + curl noise.
-      final psiLinear = windStrength * (windDir.x * fy - windDir.y * fx);
-      final psiCurlLow = _fbm3(px * 0.7, py * 0.6, tzPsi * 0.8, req.seed ^ 17);
-      final psiCurlHi = _fbm3(
-        px * 1.6,
-        py * 1.3,
-        tzPsi * 1.4 + 9.1,
-        req.seed ^ 911,
-      );
-      final gx = ((x / w) - gustCX) * 2.0;
-      final gy = ((y / h) - gustCY) * 2.0;
-      final psiGust = _windPotential(gx, gy, gustStrength);
-      final psi =
-          psiLinear +
-          psiCurlLow * 0.40 +
-          psiCurlHi * (0.22 + 0.14 * math.sin(t * 0.61)) +
-          psiGust * 0.65;
-
-      // Маленькая grad-компонента (compressible) из phi — для “дыхания”.
-      psiOut[i] = psi;
+      // Поток: либо хаотичный ветер, либо мягкая пульсация.
+      if (!isPulsate) {
+        final psiLinear = windStrength * (windDir.x * fy - windDir.y * fx);
+        final psiCurlLow =
+            _fbm3(px * 0.7, py * 0.6, tzPsi * 0.8, req.seed ^ 17);
+        final psiCurlHi = _fbm3(
+          px * 1.6,
+          py * 1.3,
+          tzPsi * 1.4 + 9.1,
+          req.seed ^ 911,
+        );
+        final gx = ((x / w) - gustCX) * 2.0;
+        final gy = ((y / h) - gustCY) * 2.0;
+        final psiGust = _windPotential(gx, gy, gustStrength);
+        psiOut[i] = psiLinear +
+            psiCurlLow * 0.40 +
+            psiCurlHi * (0.22 + 0.14 * math.sin(t * 0.61)) +
+            psiGust * 0.65;
+      } else {
+        final psiCurl = _fbm3(px * 0.9, py * 0.9, tzPsi, req.seed ^ 101);
+        final psiPulse =
+            _fbm3(px * 0.4, py * 0.4, t * 0.35 + phase, req.seed ^ 202);
+        psiOut[i] = psiCurl * 0.65 +
+            psiPulse * 0.35 * (1.0 + 1.2 * math.sin(t * 0.85 + phase * 0.7));
+      }
 
       // Source/stoke for density (zero-mean breathing).
-      final src =
-          _fbm3(px * 0.35, py * 0.35, tzPhi * 1.3, req.seed ^ 0xDEADBEEF) - 0.5;
+      final src = isPulsate
+          ? (_fbm3(px * 0.2, py * 0.2, tzPhi * 1.0, req.seed ^ 0xDEADBEEF) -
+                  0.5) *
+              1.5
+          : _fbm3(px * 0.35, py * 0.35, tzPhi * 1.3, req.seed ^ 0xDEADBEEF) -
+              0.5;
       sourceSum += src;
       rhoTmp[i] = src;
 
       // Независимое “bulge” поле для длины волосков (равномерное, пузырящееся).
       final bsrc =
-          _fbm3(px * 0.22, py * 0.22, tzPhi * 1.1 + 13.7, req.seed ^ 0x12345) -
+          _fbm3(px * 0.12, py * 0.12, tzPhi * 1.1 + 13.7, req.seed ^ 0x12345) -
           0.5;
       bulgeSrcSum += bsrc;
       bulgeTmp[i] = bsrc;
@@ -233,8 +249,13 @@ void _fillFields(
   for (var i = 0; i < rhoTmp.length; i++) {
     rhoTmp[i] = rhoTmp[i] - meanSrc;
   }
+  // normalize bulge source to zero-mean too
+  final meanB = bulgeSrcSum / (w * h);
+  for (var i = 0; i < bulgeTmp.length; i++) {
+    bulgeTmp[i] = bulgeTmp[i] - meanB;
+  }
 
-  // вычисляем divergence-free поток из psi
+  // вычисляем divergence-free поток из psi (даже в пульсациях для наклона)
   _psiToDivergenceFreeFlow(w, h, psiOut, flowX, flowY);
 
   // advection + dissipation + source
@@ -261,7 +282,7 @@ void _fillFields(
       if (r > 1) r = 1;
       rhoTmp[i] = r;
 
-      var b = advB * 0.995 + bulgeTmp[i] * 0.12 + 0.5 * 0.005;
+      var b = advB * 0.92 + bulgeTmp[i] * 0.60 + 0.5 * 0.08;
       if (b < 0) b = 0;
       if (b > 1) b = 1;
       bulgeTmp[i] = b;

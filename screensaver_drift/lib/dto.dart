@@ -33,6 +33,9 @@ class DriftFieldRequest implements IRpcSerializable {
   /// Скорость дрейфа по Y (в UV).
   final double speedY;
 
+  /// Режим генерации паттерна (0 — ветер+хаос, 1 — равномерные пульсации).
+  final int pattern;
+
   /// Случайный набор параметров (heavy).
   factory DriftFieldRequest.random(Random rng) {
     double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
@@ -51,6 +54,7 @@ class DriftFieldRequest implements IRpcSerializable {
       warpAmp: lerp(8.0, 16.0),
       speedX: lerp(-1.5, 1.5),
       speedY: lerp(-1.5, 1.5),
+      pattern: rng.nextBool() ? 0 : 1,
     );
   }
 
@@ -72,6 +76,7 @@ class DriftFieldRequest implements IRpcSerializable {
       warpAmp: lerp(5.5, 10.0),
       speedX: lerp(-1.0, 1.0),
       speedY: lerp(-1.0, 1.0),
+      pattern: 1,
     );
   }
 
@@ -85,6 +90,7 @@ class DriftFieldRequest implements IRpcSerializable {
     required this.warpAmp,
     required this.speedX,
     required this.speedY,
+    this.pattern = 0,
   });
 
   @override
@@ -98,6 +104,7 @@ class DriftFieldRequest implements IRpcSerializable {
     'warpAmp': warpAmp,
     'speedX': speedX,
     'speedY': speedY,
+    'pattern': pattern,
   };
 
   factory DriftFieldRequest.fromJson(Map<String, dynamic> json) {
@@ -113,6 +120,7 @@ class DriftFieldRequest implements IRpcSerializable {
       warpAmp: d('warpAmp'),
       speedX: d('speedX'),
       speedY: d('speedY'),
+      pattern: json.containsKey('pattern') ? i('pattern') : 0,
     );
   }
 }
