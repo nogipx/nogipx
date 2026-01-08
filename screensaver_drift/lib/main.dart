@@ -32,8 +32,8 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     _lastFrame = ValueNotifier(DriftFrameData.empty());
-    _request = DriftFieldRequest.random(_rng);
-    _painterSettings = PainterSettings.random(_rng);
+    _request = DriftFieldRequest.randomWeb(_rng);
+    _painterSettings = PainterSettings.randomWeb(_rng);
     super.initState();
   }
 
@@ -67,8 +67,8 @@ class _MyAppState extends State<MyApp> {
           icon: const Icon(Icons.shuffle),
           onPressed: () {
             setState(() {
-              _request = DriftFieldRequest.random(_rng);
-              _painterSettings = PainterSettings.random(_rng);
+              _request = DriftFieldRequest.randomWeb(_rng);
+              _painterSettings = PainterSettings.randomWeb(_rng);
               _startStream();
             });
           },
@@ -216,15 +216,75 @@ class PainterSettings {
     );
   }
 
+  factory PainterSettings.randomWeb(Random rng) {
+    double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
+    int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
+    return PainterSettings(
+      baseAlpha: lerp(0.7, 0.9),
+      lineWidth: lerp(1.0, 1.3),
+      tiltGain: lerp(14, 22),
+      tiltBrightnessGain: lerp(0.5, 0.9),
+      tiltZFloor: lerp(0.18, 0.30),
+      hairCountX: lerpInt(90, 110),
+      hairCountY: lerpInt(80, 90),
+      jitter: lerp(0.18, 0.26),
+      gamma: lerp(1.4, 1.8),
+      normalGain: lerp(3.0, 4.5),
+      ambient: lerp(0.36, 0.46),
+      diffuseK: lerp(0.9, 1.0),
+      specularK: lerp(0.22, 0.36),
+      shininess: lerp(22, 32),
+      heightCut: lerp(-0.02, 0.1),
+      heightCutFeather: lerp(0.16, 0.28),
+      projX: lerp(0.15, 0.22),
+      projY: lerp(0.86, 0.95),
+      drawBackground: true,
+      backgroundColor: const Color(0xFF06070D),
+      palette: _randomPalette(rng),
+      bulgeScale: lerp(0.4, 0.8),
+    );
+  }
+
   static List<Color> _randomPalette(Random rng) {
     double clamp01(double v) => v.clamp(0.0, 1.0);
+    double hueWrap(double h) {
+      h %= 360.0;
+      if (h < 0) h += 360.0;
+      return h;
+    }
+
     final baseHue = rng.nextDouble() * 360.0;
+    final sat = clamp01(0.60 + rng.nextDouble() * 0.25);
+    final lightBase = clamp01(0.35 + rng.nextDouble() * 0.25);
+
+    // Выбираем схему: 0 — аналогичная, 1 — триада.
+    final scheme = rng.nextBool() ? 0 : 1;
+    List<double> hues;
+    if (scheme == 0) {
+      // аналогичная
+      final spread = 25 + rng.nextDouble() * 15;
+      hues = [
+        baseHue,
+        hueWrap(baseHue + spread),
+        hueWrap(baseHue - spread),
+        hueWrap(baseHue + spread * 1.6),
+      ];
+    } else {
+      // триада
+      hues = [
+        baseHue,
+        hueWrap(baseHue + 120),
+        hueWrap(baseHue - 120),
+        hueWrap(baseHue + 180),
+      ];
+    }
+
+    // Лёгкая вариация яркости внутри палитры.
     List<Color> colors = [];
-    for (int i = 0; i < 5; i++) {
-      final h = (baseHue + i * 60 + rng.nextDouble() * 20) % 360;
-      final s = clamp01(0.55 + rng.nextDouble() * 0.35);
-      final l = clamp01(0.45 + rng.nextDouble() * 0.25);
-      colors.add(HSLColor.fromAHSL(1.0, h, s, l).toColor());
+    for (int i = 0; i < hues.length; i++) {
+      final t = i / (hues.length - 1).clamp(1, 10);
+      final l = clamp01(lightBase + (0.18 * t) - 0.06 * rng.nextDouble());
+      colors.add(HSLColor.fromAHSL(1.0, hues[i], sat, l).toColor());
     }
     return colors;
   }

@@ -515,17 +515,54 @@ class DriftFinalPainter extends CustomPainter {
   }
 
   Color _palette(double t) {
-    final c0 = palette[0];
-    final c1 = palette.length > 1 ? palette[1] : c0;
-    final c2 = palette.length > 2 ? palette[2] : c1;
-    final c3 = palette.length > 3 ? palette[3] : c2;
-    final c4 = palette.length > 4 ? palette[4] : c3;
+    // Подробный градиент через Catmull-Rom по узлам палитры (>=3 узлов).
+    if (palette.length < 3) {
+      final a = palette.isNotEmpty ? palette.first : const Color(0xFFFFFFFF);
+      return a.withOpacity(1.0);
+    }
 
+    final n = palette.length;
     t = t.clamp(0.0, 1.0);
-    if (t < 0.25) return Color.lerp(c0, c1, t / 0.25)!;
-    if (t < 0.50) return Color.lerp(c1, c2, (t - 0.25) / 0.25)!;
-    if (t < 0.75) return Color.lerp(c2, c3, (t - 0.50) / 0.25)!;
-    return Color.lerp(c3, c4, (t - 0.75) / 0.25)!;
+    final scaled = t * (n - 1);
+    final idx = scaled.floor().clamp(0, n - 2);
+    final localT = scaled - idx;
+
+    Color c(int i) => palette[i.clamp(0, n - 1)];
+
+    final p0 = c(idx - 1);
+    final p1 = c(idx);
+    final p2 = c(idx + 1);
+    final p3 = c(idx + 2);
+
+    Color catmullRom(Color a, Color b, Color c, Color d, double t) {
+      double cr(double a, double b, double c, double d, double t) {
+        final t2 = t * t;
+        final t3 = t2 * t;
+        return 0.5 *
+            (2 * b +
+                (-a + c) * t +
+                (2 * a - 5 * b + 4 * c - d) * t2 +
+                (-a + 3 * b - 3 * c + d) * t3);
+      }
+
+      return Color.fromARGB(
+        255,
+        cr(a.red.toDouble(), b.red.toDouble(), c.red.toDouble(),
+                d.red.toDouble(), t)
+            .clamp(0, 255)
+            .round(),
+        cr(a.green.toDouble(), b.green.toDouble(), c.green.toDouble(),
+                d.green.toDouble(), t)
+            .clamp(0, 255)
+            .round(),
+        cr(a.blue.toDouble(), b.blue.toDouble(), c.blue.toDouble(),
+                d.blue.toDouble(), t)
+            .clamp(0, 255)
+            .round(),
+      );
+    }
+
+    return catmullRom(p0, p1, p2, p3, localT);
   }
 
   static const List<Color> defaultPalette = [

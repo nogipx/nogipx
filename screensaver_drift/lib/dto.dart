@@ -33,24 +33,45 @@ class DriftFieldRequest implements IRpcSerializable {
   /// Скорость дрейфа по Y (в UV).
   final double speedY;
 
-  /// Случайный набор параметров для генерации разнообразных паттернов.
+  /// Случайный набор параметров (heavy).
   factory DriftFieldRequest.random(Random rng) {
     double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
     int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
 
-    final w = lerpInt(150, 250);
-    final h = (w * 9 / 16 / 1.5).round();
+    final w = lerpInt(220, 320);
+    final h = (w * 9 / 16).round();
 
     return DriftFieldRequest(
       w: w,
       h: h,
       fps: 60,
       seed: rng.nextInt(0x7fffffff),
-      baseFreq: lerp(0.024, 0.052),
-      warpFreq: lerp(0.12, 0.16),
-      warpAmp: lerp(8.0, 18.0),
-      speedX: lerp(0, 3),
-      speedY: lerp(0, 3),
+      baseFreq: lerp(0.018, 0.030),
+      warpFreq: lerp(0.03, 0.06),
+      warpAmp: lerp(8.0, 16.0),
+      speedX: lerp(-1.5, 1.5),
+      speedY: lerp(-1.5, 1.5),
+    );
+  }
+
+  /// Лёгкие настройки для Web.
+  factory DriftFieldRequest.randomWeb(Random rng) {
+    double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
+    int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
+
+    final w = 150;
+    final h = (w * 9 / 16 / 2).round();
+
+    return DriftFieldRequest(
+      w: w,
+      h: h,
+      fps: 60,
+      seed: rng.nextInt(0x7fffffff),
+      baseFreq: lerp(0.016, 0.028),
+      warpFreq: lerp(0.02, 0.05),
+      warpAmp: lerp(5.5, 10.0),
+      speedX: lerp(-1.0, 1.0),
+      speedY: lerp(-1.0, 1.0),
     );
   }
 
@@ -133,14 +154,14 @@ class DriftFieldFrame implements IRpcSerializable {
 
   @override
   Map<String, dynamic> toJson() => {
-        'w': w,
-        'h': h,
-        't': t,
-        'flowX': _encodeBytes(flowX),
-        'flowY': _encodeBytes(flowY),
-        'height': _encodeBytes(height),
-        'bulge': _encodeBytes(bulge),
-      };
+    'w': w,
+    'h': h,
+    't': t,
+    'flowX': _encodeBytes(flowX),
+    'flowY': _encodeBytes(flowY),
+    'height': _encodeBytes(height),
+    'bulge': _encodeBytes(bulge),
+  };
 
   factory DriftFieldFrame.fromJson(Map<String, dynamic> json) {
     Uint8List b64(String key) => _decodeBytes(json[key]!);
