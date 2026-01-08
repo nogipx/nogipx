@@ -11,6 +11,7 @@
 // Requires: dto.dart contains DriftFieldRequest / DriftFieldFrame, and rpc_dart generator parts.
 
 import 'dart:isolate';
+import 'dart:math' as math;
 import 'dart:math';
 
 import 'package:rpc_dart/rpc_dart.dart';
@@ -51,6 +52,8 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
     final flowX = Float32List(n);
     final flowY = Float32List(n);
     final height = Float32List(n);
+    final rho = Float32List(n); // advected density (“breathing voids”)
+    final rhoTmp = Float32List(n);
 
     final dt = 1.0 / max(1, request.fps);
     var t = 0.0;
@@ -63,10 +66,10 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
         return;
       }
 
-      _fillPsiAndHeight(request, t, psi, height);
-      _psiToDivergenceFreeFlow(w, h, psi, flowX, flowY);
+      _fillFields(request, t, dt, psi, flowX, flowY, rho, rhoTmp, height);
 
-      yield _buildFrame(dataTransferMode, w, h, t, flowX, flowY, height);
+      final mode = dataTransferMode ?? RpcDataTransferMode.zeroCopy;
+      yield _buildFrame(mode, w, h, t, flowX, flowY, height);
 
       t += dt;
       await Future<void>.delayed(Duration(microseconds: (dt * 1e6).round()));
@@ -104,23 +107,36 @@ DriftFieldFrame _buildFrame(
 // Field algorithm (3D noise + 3D domain warp)
 // -----------------------------------------------------------------------------
 
-void _fillPsiAndHeight(
+void _fillFields(
   DriftFieldRequest req,
   double t,
+  double dt,
   Float32List psiOut,
+  Float32List flowX,
+  Float32List flowY,
+  Float32List rho,
+  Float32List rhoTmp,
   Float32List hOut,
 ) {
   final w = req.w;
   final h = req.h;
 
-  // Два независимых тайма + фазовые сдвиги, чтобы избежать «пинг-понга».
-  final phasePsi = req.seed * 0.013;
-  final phaseWarp = req.seed * 0.021;
-  final tzPsi = t * 0.42 + phasePsi;
-  final tzWarp = t * 0.31 + phaseWarp;
-  final slideX = t * req.speedX * 1.1;
-  final slideY = t * req.speedY * 1.1;
+  // Divergence-free поток: глобальное “ветровое” направление + curl-noise.
+  final phase = req.seed * 0.011;
+  final tzPsi = t * 0.30 + phase;
+  final tzWarp = t * 0.18 + phase * 1.3;
+  final tzPhi = t * 0.08 + phase * 0.7; // breathing potential (very low freq)
+  final slideX = t * req.speedX * 0.6;
+  final slideY = t * req.speedY * 0.6;
+  final windDir = _normalize(
+    req.speedX + math.sin(t * 0.17) * 0.4,
+    req.speedY + math.cos(t * 0.13) * 0.4,
+    fallbackX: 0.8,
+    fallbackY: -0.6,
+  );
+  final windStrength = 1.15;
 
+  double sourceSum = 0.0;
   for (var y = 0; y < h; y++) {
     for (var x = 0; x < w; x++) {
       final i = y * w + x;
@@ -128,24 +144,24 @@ void _fillPsiAndHeight(
       final fx = x.toDouble();
       final fy = y.toDouble();
 
-      // 3D domain warp (two independent components)
+      // 3D domain warp (слабый, чтобы избежать сеточных артефактов).
       final wx = _fbm3(
-        (fx + slideX) * req.warpFreq,
-        (fy + slideY) * req.warpFreq,
+        (fx + slideX) * req.warpFreq * 0.12,
+        (fy + slideY) * req.warpFreq * 0.12,
         tzWarp,
         req.seed ^ 0xA341316C,
       );
       final wy = _fbm3(
-        (fx + 37.0 + slideX) * req.warpFreq,
-        (fy - 11.0 + slideY) * req.warpFreq,
+        (fx + 37.0 + slideX) * req.warpFreq * 0.12,
+        (fy - 11.0 + slideY) * req.warpFreq * 0.12,
         tzWarp + 11.0,
         req.seed ^ 0xC8013EA4,
       );
 
-      final dx = (wx - 0.5) * req.warpAmp;
-      final dy = (wy - 0.5) * req.warpAmp;
+      final dx = (wx - 0.5) * req.warpAmp * 0.32;
+      final dy = (wy - 0.5) * req.warpAmp * 0.32;
 
-      // Optional: keep tiny drift from speedX/speedY (low impact, but adds “drift”)
+      // Глобальный drift по скорости.
       final driftX = t * req.speedX * 0.35;
       final driftY = t * req.speedY * 0.35;
 
@@ -153,16 +169,56 @@ void _fillPsiAndHeight(
       final px = (fx + dx + driftX + t * 0.22) * req.baseFreq;
       final py = (fy + dy + driftY + t * 0.27) * req.baseFreq;
 
-      // psi: anisotropy helps “banding”
-      final psi = _fbm3(px * 1.6, py * 0.9, tzPsi, req.seed);
+      // Поток: линейный ветер (curl от линейной фазы) + curl noise.
+      final psiLinear = windStrength * (windDir.x * fy - windDir.y * fx);
+      final psiCurlLow = _fbm3(px * 0.7, py * 0.6, tzPsi * 0.8, req.seed ^ 17);
+      final psiCurlHi = _fbm3(px * 1.6, py * 1.3, tzPsi * 1.4 + 9.1, req.seed ^ 911);
+      final psi = psiLinear +
+          psiCurlLow * 0.40 +
+          psiCurlHi * (0.22 + 0.08 * math.sin(t * 0.37));
 
-      // height: separate seed
-      var hh = _fbm3(px, py, tzPsi * 0.9 + 23.7, req.seed ^ 0x9E3779B9);
-      hh = _smooth01(hh); // map to 0..1 with gentle contrast
-
+      // Маленькая grad-компонента (compressible) из phi — для “дыхания”.
       psiOut[i] = psi;
-      hOut[i] = hh;
+
+      // Source/stoke for density (zero-mean breathing).
+      final src = _fbm3(px * 0.35, py * 0.35, tzPhi * 1.3, req.seed ^ 0xDEADBEEF) - 0.5;
+      sourceSum += src;
+      rhoTmp[i] = src;
     }
+  }
+
+  // normalize source to zero-mean
+  final meanSrc = sourceSum / (w * h);
+  for (var i = 0; i < rhoTmp.length; i++) {
+    rhoTmp[i] = rhoTmp[i] - meanSrc;
+  }
+
+  // вычисляем divergence-free поток из psi
+  _psiToDivergenceFreeFlow(w, h, psiOut, flowX, flowY);
+
+  // advection + dissipation + source
+  const dissipation = 0.99;
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      final i = y * w + x;
+      final vx = flowX[i];
+      final vy = flowY[i];
+
+      final backX = (x.toDouble() - vx * dt * w).clamp(0.0, w - 1.0);
+      final backY = (y.toDouble() - vy * dt * h).clamp(0.0, h - 1.0);
+      final adv = _sampleBilinear(rho, w, h, backX / (w - 1), backY / (h - 1));
+
+      var r = adv * dissipation + rhoTmp[i] * 0.18 + 0.5 * (1 - dissipation);
+      if (r < 0) r = 0;
+      if (r > 1) r = 1;
+      rhoTmp[i] = r;
+    }
+  }
+
+  // swap rho buffers and use as height
+  for (var i = 0; i < rho.length; i++) {
+    rho[i] = rhoTmp[i];
+    hOut[i] = math.pow(rho[i], 1.2).toDouble();
   }
 }
 
@@ -286,4 +342,58 @@ double _fade(double t) => t * t * (3.0 - 2.0 * t); // smoothstep
 double _smooth01(double v) {
   final x = v.clamp(0.0, 1.0);
   return x * x * (3.0 - 2.0 * x);
+}
+
+double _sampleBilinear(
+  Float32List g,
+  int w,
+  int h,
+  double u,
+  double v,
+) {
+  u = u.clamp(0.0, 1.0);
+  v = v.clamp(0.0, 1.0);
+
+  final x = u * (w - 1);
+  final y = v * (h - 1);
+
+  final x0 = x.floor();
+  final y0 = y.floor();
+  final x1 = (x0 + 1).clamp(0, w - 1);
+  final y1 = (y0 + 1).clamp(0, h - 1);
+
+  final tx = x - x0;
+  final ty = y - y0;
+
+  final i00 = y0 * w + x0;
+  final i10 = y0 * w + x1;
+  final i01 = y1 * w + x0;
+  final i11 = y1 * w + x1;
+
+  final a = g[i00];
+  final b = g[i10];
+  final c = g[i01];
+  final d = g[i11];
+
+  final ab = a + (b - a) * tx;
+  final cd = c + (d - c) * tx;
+  return ab + (cd - ab) * ty;
+}
+
+double _windPotential(double x, double y, double strength) {
+  final r2 = x * x + y * y + 1e-4;
+  final falloff = math.exp(-r2 * 1.8);
+  final ang = math.atan2(y, x);
+  return strength * falloff * ang;
+}
+
+({double x, double y}) _normalize(double x, double y,
+    {double fallbackX = 1.0, double fallbackY = 0.0}) {
+  final len2 = x * x + y * y;
+  if (len2 < 1e-6) {
+    final inv = 1.0 / math.sqrt(fallbackX * fallbackX + fallbackY * fallbackY);
+    return (x: fallbackX * inv, y: fallbackY * inv);
+  }
+  final inv = 1.0 / math.sqrt(len2);
+  return (x: x * inv, y: y * inv);
 }

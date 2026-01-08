@@ -37,6 +37,7 @@ class DriftFinalPainter extends CustomPainter {
     this.L1 = 10.0,
     this.gamma = 2.2,
     this.tiltGain = 120.0,
+    this.tiltZFloor = 0.2,
     this.tiltBrightnessGain = 0.8,
 
     // видимость по наклону
@@ -103,6 +104,9 @@ class DriftFinalPainter extends CustomPainter {
 
   /// Базовая длина (L0), добавка от height (L1), гамма height и усиление наклона.
   final double tiltGain;
+
+  /// Минимальная вертикальная компонента (не даём z падать ниже, чтобы не пропадали).
+  final double tiltZFloor;
 
   /// Усиление яркости/альфы при большем наклоне по flow.
   final double tiltBrightnessGain;
@@ -195,7 +199,6 @@ class DriftFinalPainter extends CustomPainter {
     final totalHairs = hairCountX * hairCountY;
     if (totalHairs <= 0) return;
 
-    final cosMax = math.cos(maxTiltDeg * math.pi / 180.0);
     final dxCell = size.width / hairCountX;
     final dyCell = size.height / hairCountY;
     final halfW = lineWidth * 0.5;
@@ -256,13 +259,12 @@ class DriftFinalPainter extends CustomPainter {
         vx *= inv;
         vy *= inv;
         vz *= inv;
+        vz = vz.clamp(tiltZFloor, 1.0);
 
-        // tilt visibility
-        final aTilt = _smoothstep(cosMax, cosMax + featherCos, vz);
+        // tilt visibility: скрываем почти вертикальные, усиливаем наклонённые
         final tilt = (1.0 - vz).clamp(0.0, 1.0);
-
-        var alpha =
-            (baseAlpha * (1.0 + tilt * 0.4) * aTilt * hMask).clamp(0.0, 1.0);
+        final tiltAlpha = _smoothstep(0.02, 0.32, tilt);
+        var alpha = (baseAlpha * tiltAlpha * hMask).clamp(0.0, 1.0);
 
         final vBase = b * 4;
         final pBase = vBase * 2;
@@ -423,6 +425,7 @@ class DriftFinalPainter extends CustomPainter {
         old.additive != additive ||
         old.drawBackground != drawBackground ||
         old.backgroundColor != backgroundColor ||
+        old.tiltZFloor != tiltZFloor ||
         old.palette != palette ||
         old.L0 != L0 ||
         old.L1 != L1 ||

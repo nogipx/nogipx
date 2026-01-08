@@ -83,6 +83,7 @@ class _MyAppState extends State<MyApp> {
                   lineWidth: _painterSettings.lineWidth,
                   tiltGain: _painterSettings.tiltGain,
                   tiltBrightnessGain: _painterSettings.tiltBrightnessGain,
+                  tiltZFloor: _painterSettings.tiltZFloor,
                   hairCountX: _painterSettings.hairCountX,
                   hairCountY: _painterSettings.hairCountY,
                   jitter: _painterSettings.jitter,
@@ -117,6 +118,7 @@ class PainterSettings {
     required this.lineWidth,
     required this.tiltGain,
     required this.tiltBrightnessGain,
+    required this.tiltZFloor,
     required this.hairCountX,
     required this.hairCountY,
     required this.jitter,
@@ -139,6 +141,7 @@ class PainterSettings {
   final double lineWidth;
   final double tiltGain;
   final double tiltBrightnessGain;
+  final double tiltZFloor;
   final int hairCountX;
   final int hairCountY;
   final double jitter;
@@ -161,6 +164,7 @@ class PainterSettings {
     lineWidth: 1.3,
     tiltGain: 16,
     tiltBrightnessGain: 0.7,
+    tiltZFloor: 0.22,
     hairCountX: 220,
     hairCountY: 130,
     jitter: 0.12,
@@ -187,9 +191,10 @@ class PainterSettings {
       lineWidth: lerp(1.0, 1.5),
       tiltGain: lerp(18, 30),
       tiltBrightnessGain: lerp(0.4, 1.0),
+      tiltZFloor: lerp(0.18, 0.32),
       hairCountX: lerpInt(120, 220),
       hairCountY: lerpInt(50, 110),
-      jitter: lerp(0.5, 0.9),
+      jitter: lerp(0.08, 0.2),
       gamma: lerp(1.4, 1.9),
       normalGain: lerp(3.0, 5.0),
       ambient: lerp(0.35, 0.48),
