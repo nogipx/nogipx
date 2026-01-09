@@ -4,7 +4,7 @@ part of '_index.dart';
 ///
 /// [w], [h] — размер сетки;
 /// [seed] задает фазу шумов;
-/// [pattern] переключает режимы (0 — ветер/буря, 1 — пульсации).
+/// [strategy] — произвольный идентификатор стратегии (drift/pulsate/fire/...).
 /// [speedX]/[speedY] задают глобальный дрейф,
 /// [warpFreq]/[warpAmp] — частоту/амплитуду доменного варпа,
 /// [baseFreq] — базовую частоту выборки шума.
@@ -16,7 +16,6 @@ class TemporalParams {
     required this.tzPsi,
     required this.tzWarp,
     required this.tzPhi,
-    required this.isPulsate,
     required this.slideX,
     required this.slideY,
     required this.windDir,
@@ -24,13 +23,16 @@ class TemporalParams {
     required this.gustCX,
     required this.gustCY,
     required this.gustStrength,
+    required this.warpScale,
+    required this.warpAmp,
+    required this.driftScale,
+    required this.baseFreqScale,
   });
 
   final double phase;
   final double tzPsi;
   final double tzWarp;
   final double tzPhi;
-  final bool isPulsate;
   final double slideX;
   final double slideY;
   final ({double x, double y}) windDir;
@@ -38,6 +40,10 @@ class TemporalParams {
   final double gustCX;
   final double gustCY;
   final double gustStrength;
+  final double warpScale;
+  final double warpAmp;
+  final double driftScale;
+  final double baseFreqScale;
 }
 
 /// Универсальная конфигурация поля, не зависящая от RPC- или DTO-типов проекта.
@@ -48,7 +54,7 @@ class TemporalParams {
 ///
 /// * [w]/[h]: размер сетки.
 /// * [seed]: фазовый сдвиг шумов.
-/// * [pattern]: 0 — буря, 1 — пульсации.
+/// * [strategy]: произвольный идентификатор стратегии.
 /// * [speedX]/[speedY]: скорость глобального дрейфа поля.
 /// * [warpFreq]/[warpAmp]: частота/амплитуда доменного варпа.
 /// * [baseFreq]: базовая частота выборки основного шума.
@@ -58,12 +64,13 @@ class FieldConfig {
     required this.w,
     required this.h,
     required this.seed,
-    required this.pattern,
+    required this.strategy,
     required this.speedX,
     required this.speedY,
     required this.warpFreq,
     required this.warpAmp,
     required this.baseFreq,
+    this.strategyParams,
     this.tuning = const FieldTuning(),
   });
 
@@ -74,7 +81,8 @@ class FieldConfig {
     w: req.w,
     h: req.h,
     seed: req.seed,
-    pattern: req.pattern,
+    strategy: req.strategy,
+    strategyParams: req.strategyParams,
     speedX: req.speedX,
     speedY: req.speedY,
     warpFreq: req.warpFreq,
@@ -86,7 +94,8 @@ class FieldConfig {
   final int w;
   final int h;
   final int seed;
-  final int pattern;
+  final String strategy;
+  final Map<String, dynamic>? strategyParams;
   final double speedX;
   final double speedY;
   final double warpFreq;

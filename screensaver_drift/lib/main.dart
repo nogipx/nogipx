@@ -8,6 +8,8 @@ import 'package:screensaver_drift/worker.dart';
 import 'dto.dart';
 import 'model.dart';
 
+enum VisualMode { fire, drift }
+
 void main() async {
   final client = await DriftWorkerClient.spawn();
   runApp(MyApp(worker: client));
@@ -26,6 +28,7 @@ class _MyAppState extends State<MyApp> {
   late final ValueNotifier<DriftFrameData> _lastFrame;
   late final ValueNotifier<double> _fps;
   StreamSubscription? _sub;
+  late VisualMode _mode;
   late DriftFieldRequest _request;
   late PainterSettings _painterSettings;
   final _rng = Random();
@@ -36,9 +39,55 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     _lastFrame = ValueNotifier(DriftFrameData.empty());
     _fps = ValueNotifier(0);
-    _request = DriftFieldRequest.randomWeb(_rng);
-    _painterSettings = PainterSettings.randomWeb(_rng);
+    _mode = VisualMode.fire;
+    _request = _buildRequestForMode(_mode);
+    _painterSettings = _buildPainterSettingsForMode(_mode);
     super.initState();
+  }
+
+  DriftFieldRequest _buildRequestForMode(VisualMode mode) {
+    switch (mode) {
+      case VisualMode.fire:
+        return DriftFieldRequest.fire(_rng);
+      case VisualMode.drift:
+        return DriftFieldRequest.randomWeb(_rng);
+    }
+  }
+
+  PainterSettings _buildPainterSettingsForMode(VisualMode mode) {
+    switch (mode) {
+      case VisualMode.fire:
+        return PainterSettings.fire(_rng);
+      case VisualMode.drift:
+        return PainterSettings.randomWeb(_rng);
+    }
+  }
+
+  void _randomizeCurrent() {
+    setState(() {
+      _request = _buildRequestForMode(_mode);
+      _painterSettings = _buildPainterSettingsForMode(_mode);
+      _startStream();
+    });
+  }
+
+  void _setMode(VisualMode mode) {
+    if (mode == _mode) return;
+    setState(() {
+      _mode = mode;
+      _request = _buildRequestForMode(mode);
+      _painterSettings = _buildPainterSettingsForMode(mode);
+      _startStream();
+    });
+  }
+
+  String _modeLabel(VisualMode mode) {
+    switch (mode) {
+      case VisualMode.fire:
+        return 'Fire';
+      case VisualMode.drift:
+        return 'Drift';
+    }
   }
 
   void _startStream() {
@@ -81,15 +130,9 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         floatingActionButton: FloatingActionButton.extended(
-          label: const Text('Randomize'),
+          label: Text('Random ${_modeLabel(_mode)}'),
           icon: const Icon(Icons.shuffle),
-          onPressed: () {
-            setState(() {
-              _request = DriftFieldRequest.randomWeb(_rng);
-              _painterSettings = PainterSettings.randomWeb(_rng);
-              _startStream();
-            });
-          },
+          onPressed: _randomizeCurrent,
         ),
         body: ValueListenableBuilder(
           valueListenable: _lastFrame,
@@ -150,6 +193,41 @@ class _MyAppState extends State<MyApp> {
                         ),
                       );
                     },
+                  ),
+                ),
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: VisualMode.values.map((mode) {
+                        final selected = mode == _mode;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: ChoiceChip(
+                            label: Text(_modeLabel(mode)),
+                            selected: selected,
+                            onSelected: (_) => _setMode(mode),
+                            labelStyle: TextStyle(
+                              color: selected ? Colors.black : Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            selectedColor: Colors.amber.shade300,
+                            backgroundColor: Colors.white.withOpacity(0.08),
+                            side: const BorderSide(color: Colors.white24),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ],
@@ -293,6 +371,35 @@ class PainterSettings {
     );
   }
 
+  factory PainterSettings.fire(Random rng) {
+    double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
+    int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
+    return PainterSettings(
+      baseAlpha: lerp(0.78, 0.9),
+      lineWidth: lerp(1.15, 1.45),
+      tiltGain: lerp(14, 20),
+      tiltBrightnessGain: lerp(0.75, 1.05),
+      tiltZFloor: lerp(0.12, 0.2),
+      hairCountX: lerpInt(110, 140),
+      hairCountY: lerpInt(180, 220),
+      jitter: lerp(0.16, 0.26),
+      gamma: lerp(1.35, 1.55),
+      normalGain: lerp(3.2, 4.0),
+      ambient: lerp(0.30, 0.40),
+      diffuseK: lerp(0.98, 1.10),
+      specularK: lerp(0.14, 0.24),
+      shininess: lerp(18, 28),
+      heightCut: lerp(-0.05, 0.06),
+      heightCutFeather: lerp(0.14, 0.24),
+      projX: lerp(0.12, 0.18),
+      projY: lerp(0.88, 0.98),
+      drawBackground: true,
+      backgroundColor: const Color(0xFF080402),
+      palette: _firePalette(rng),
+      bulgeScale: lerp(0.75, 1.05),
+    );
+  }
+
   static List<Color> _flutterPalette(Random rng) {
     const presets = [
       [
@@ -318,6 +425,33 @@ class PainterSettings {
         Color(0xFF2563EB), // blue
         Color(0xFF22D3EE), // cyan
         Color(0xFF60F6D2), // mint
+      ],
+    ];
+    return presets[rng.nextInt(presets.length)];
+  }
+
+  static List<Color> _firePalette(Random rng) {
+    const presets = [
+      [
+        Color(0xFF0D0302), // charcoal
+        Color(0xFF5B1207), // ember red
+        Color(0xFFBC2F10), // hot orange
+        Color(0xFFE86F0C), // bright flame
+        Color(0xFFFFE8B8), // soft white tip
+      ],
+      [
+        Color(0xFF0A0507), // dark plum
+        Color(0xFF7A1E0A), // lava
+        Color(0xFFCC3A0F), // orange core
+        Color(0xFFF59F0A), // golden
+        Color(0xFFFFF4D2), // pale tip
+      ],
+      [
+        Color(0xFF050305), // near black
+        Color(0xFF4E0E0C), // deep ember
+        Color(0xFFB22710), // vermilion
+        Color(0xFFF1740A), // flame orange
+        Color(0xFFFFE0A6), // light tip
       ],
     ];
     return presets[rng.nextInt(presets.length)];

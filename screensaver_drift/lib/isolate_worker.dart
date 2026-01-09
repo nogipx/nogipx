@@ -18,7 +18,7 @@ void driftWorkerEntrypoint(
   final isZeroCopy = customParams['isZeroCopy'] == true;
   responder.registerServiceContract(
     ScreensaverCompute(
-      randomTuning: true,
+      // randomTuning: true,
       dataTransferMode: isZeroCopy
           ? RpcDataTransferMode.zeroCopy
           : RpcDataTransferMode.codec,

@@ -5,49 +5,41 @@ enum BufferTransferMode { zeroCopy, copy }
 
 /// Универсальное представление кадра поля без привязки к RPC-слою.
 ///
-/// * [w]/[h]: размер сетки.
-/// * [t]: время кадра.
-/// * [flowX]/[flowY]: буферы скоростей.
-/// * [height]: высота/интенсивность.
-/// * [bulge]: буфер пузырей/длины волосков.
+/// * [kind]: тип кадра (например, `standard`).
+/// * [channels]: произвольные каналы (обычно Float32 буферы).
+/// * [meta]: дополнительная метаинформация (цвета, gamma и т.п.).
 class FieldFrame {
   FieldFrame({
     required this.w,
     required this.h,
     required this.t,
-    required this.flowX,
-    required this.flowY,
-    required this.height,
-    required this.bulge,
+    required this.kind,
+    required this.channels,
+    this.meta,
   });
 
   final int w;
   final int h;
   final double t;
-  final Object flowX;
-  final Object flowY;
-  final Object height;
-  final Object bulge;
+  final String kind;
+  final Map<String, Object> channels;
+  final Map<String, dynamic>? meta;
 }
 
 /// Упаковывает буферы поля в переносимый [FieldFrame] с выбранным режимом.
 ///
 /// Используйте для сборки результата после заполнения Float32List массивов
 /// вне контекста конкретного RPC-протокола. [mode] задает zero-copy или копию;
-/// [w]/[h] — размер сетки; [t] — время кадра; остальные аргументы — буферы.
+/// [channels] — произвольные именованные каналы (обычно Float32List).
 FieldFrame buildFieldFrame(
   BufferTransferMode mode,
   int w,
   int h,
-  double t,
-  Float32List flowX,
-  Float32List flowY,
-  Float32List height,
-  Float32List bulge,
-) {
-  // Формирует переносимый объект поля, выбирая между zero-copy и копией.
-  // Используйте zero-copy для локальных изолятов, иначе безопасную копию через
-  // Uint8List, чтобы избежать проблем с владением буфера.
+  double t, {
+  String kind = 'standard',
+  required Map<String, Float32List> channels,
+  Map<String, dynamic>? meta,
+}) {
   Object pack(Float32List src) {
     if (mode == BufferTransferMode.zeroCopy) {
       return TransferableTypedData.fromList([src.buffer.asUint8List()]);
@@ -55,14 +47,17 @@ FieldFrame buildFieldFrame(
     return Uint8List.fromList(src.buffer.asUint8List());
   }
 
+  final packed = <String, Object>{
+    for (final entry in channels.entries) entry.key: pack(entry.value),
+  };
+
   return FieldFrame(
     w: w,
     h: h,
     t: t,
-    flowX: pack(flowX),
-    flowY: pack(flowY),
-    height: pack(height),
-    bulge: pack(bulge),
+    kind: kind,
+    channels: packed,
+    meta: meta,
   );
 }
 
@@ -71,8 +66,7 @@ DriftFieldFrame toDriftFieldFrame(FieldFrame frame) => DriftFieldFrame(
   w: frame.w,
   h: frame.h,
   t: frame.t,
-  flowX: frame.flowX,
-  flowY: frame.flowY,
-  height: frame.height,
-  bulge: frame.bulge,
+  kind: frame.kind,
+  channels: frame.channels,
+  meta: frame.meta,
 );

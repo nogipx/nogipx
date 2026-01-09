@@ -7,7 +7,11 @@ import 'package:rpc_dart/rpc_dart.dart';
 
 import '../dto.dart';
 
-part 'field_generation.dart';
+part 'field_strategy/common.dart';
+part 'field_strategy/i_field_strategy.dart';
+part 'field_strategy/drift_strategy.dart';
+part 'field_strategy/pulsate_strategy.dart';
+part 'field_strategy/fire_strategy.dart';
 part 'noise_utils.dart';
 part 'transfer.dart';
 part 'tuning.dart';

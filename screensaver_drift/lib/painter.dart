@@ -185,12 +185,15 @@ class DriftFinalPainter extends CustomPainter {
     final f = getFrame();
     if (f == null) return;
 
+    final flowX = f.channel('flowX');
+    final flowY = f.channel('flowY');
+    final height = f.channel('height');
+    final bulgeField = f.channel('bulge');
+    if (flowX == null || flowY == null || height == null || bulgeField == null) {
+      return;
+    }
     final fieldW = f.w;
     final fieldH = f.h;
-    final flowX = f.flowX;
-    final flowY = f.flowY;
-    final height = f.height;
-    final bulgeField = f.bulge;
 
     final n = fieldW * fieldH;
     if (fieldW <= 1 || fieldH <= 1) return;

@@ -117,10 +117,13 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
         w,
         h,
         t,
-        flowX,
-        flowY,
-        height,
-        bulge,
+        kind: 'standard',
+        channels: {
+          'flowX': flowX,
+          'flowY': flowY,
+          'height': height,
+          'bulge': bulge,
+        },
       );
       yield toDriftFieldFrame(payload);
 

@@ -9,44 +9,46 @@ class DriftFrameData with EquatableMixin {
   final int w;
   final int h;
   final double t;
-  final Float32List flowX;
-  final Float32List flowY;
-  final Float32List height;
-  final Float32List bulge;
+  final String kind;
+  final Map<String, Float32List> channels;
+  final Map<String, dynamic>? meta;
 
   const DriftFrameData({
     required this.w,
     required this.h,
     required this.t,
-    required this.flowX,
-    required this.flowY,
-    required this.height,
-    required this.bulge,
+    required this.kind,
+    required this.channels,
+    required this.meta,
   });
 
   @override
-  List<Object?> get props => [w, h, t, flowX, flowY, height];
+  List<Object?> get props => [w, h, t, kind, channels];
 
   factory DriftFrameData.empty() {
     return DriftFrameData(
       w: 0,
       h: 0,
       t: 0,
-      flowX: Float32List(0),
-      flowY: Float32List(0),
-      height: Float32List(0),
-      bulge: Float32List(0),
+      kind: 'standard',
+      channels: const <String, Float32List>{},
+      meta: const <String, dynamic>{},
     );
   }
   factory DriftFrameData.fromRawFrame(DriftFieldFrame frame) {
+    final decoded = <String, Float32List>{
+      for (final entry in frame.channels.entries)
+        entry.key: DriftWorkerClient.materializeF32(entry.value),
+    };
     return DriftFrameData(
       w: frame.w,
       h: frame.h,
       t: frame.t,
-      flowX: DriftWorkerClient.materializeF32(frame.flowX),
-      flowY: DriftWorkerClient.materializeF32(frame.flowY),
-      height: DriftWorkerClient.materializeF32(frame.height),
-      bulge: DriftWorkerClient.materializeF32(frame.bulge),
+      kind: frame.kind,
+      channels: decoded,
+      meta: frame.meta,
     );
   }
+
+  Float32List? channel(String name) => channels[name];
 }

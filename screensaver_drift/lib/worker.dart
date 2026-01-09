@@ -48,6 +48,9 @@ final class DriftWorkerClient {
   }
 
   static Float32List materializeF32(Object source) {
+    if (source is Float32List) {
+      return source;
+    }
     if (source is List<int>) {
       final u8 = Uint8List.fromList(source);
       return u8.buffer.asFloat32List(0, u8.lengthInBytes ~/ 4);

@@ -33,8 +33,11 @@ class DriftFieldRequest implements IRpcSerializable {
   /// Скорость дрейфа по Y (в UV).
   final double speedY;
 
-  /// Режим генерации паттерна (0 — ветер+хаос, 1 — равномерные пульсации).
-  final int pattern;
+  /// Идентификатор стратегии (например, drift / pulsate / fire).
+  final String strategy;
+
+  /// Произвольные параметры для выбранной стратегии.
+  final Map<String, dynamic>? strategyParams;
 
   /// Случайный набор параметров (heavy).
   factory DriftFieldRequest.random(Random rng) {
@@ -54,7 +57,7 @@ class DriftFieldRequest implements IRpcSerializable {
       warpAmp: lerp(8.0, 16.0),
       speedX: lerp(-1.5, 1.5),
       speedY: lerp(-1.5, 1.5),
-      pattern: 1,
+      strategy: 'pulsate',
     );
   }
 
@@ -76,7 +79,29 @@ class DriftFieldRequest implements IRpcSerializable {
       warpAmp: lerp(5.5, 10.0),
       speedX: lerp(-1.0, 1.0),
       speedY: lerp(-1.0, 1.0),
-      pattern: 1,
+      strategy: 'drift',
+    );
+  }
+
+  /// Настройки для огненной симуляции: вытянутая сетка и устойчивый апдрафт.
+  factory DriftFieldRequest.fire(Random rng) {
+    double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
+    int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
+
+    final w = lerpInt(120, 180);
+    final h = (w * 1.6).round();
+
+    return DriftFieldRequest(
+      w: w,
+      h: h,
+      fps: 60,
+      seed: rng.nextInt(0x7fffffff),
+      baseFreq: lerp(0.020, 0.030),
+      warpFreq: lerp(0.03, 0.055),
+      warpAmp: lerp(6.5, 11.0),
+      speedX: lerp(-0.35, 0.35),
+      speedY: lerp(-1.2, -0.6),
+      strategy: 'fire',
     );
   }
 
@@ -90,7 +115,8 @@ class DriftFieldRequest implements IRpcSerializable {
     required this.warpAmp,
     required this.speedX,
     required this.speedY,
-    this.pattern = 0,
+    required this.strategy,
+    this.strategyParams,
   });
 
   @override
@@ -104,12 +130,20 @@ class DriftFieldRequest implements IRpcSerializable {
     'warpAmp': warpAmp,
     'speedX': speedX,
     'speedY': speedY,
-    'pattern': pattern,
+    'strategy': strategy,
+    if (strategyParams != null) 'strategyParams': strategyParams,
   };
 
   factory DriftFieldRequest.fromJson(Map<String, dynamic> json) {
     double d(String k) => (json[k] as num).toDouble();
     int i(String k) => (json[k] as num).toInt();
+    Map<String, dynamic>? params() {
+      final raw = json['strategyParams'];
+      if (raw is Map) {
+        return Map<String, dynamic>.from(raw);
+      }
+      return null;
+    }
     return DriftFieldRequest(
       w: i('w'),
       h: i('h'),
@@ -120,7 +154,8 @@ class DriftFieldRequest implements IRpcSerializable {
       warpAmp: d('warpAmp'),
       speedX: d('speedX'),
       speedY: d('speedY'),
-      pattern: json.containsKey('pattern') ? i('pattern') : 0,
+      strategy: (json['strategy'] as String?) ?? 'drift',
+      strategyParams: params(),
     );
   }
 }
@@ -130,34 +165,17 @@ class DriftFieldFrame implements IRpcSerializable {
   final int w;
   final int h;
   final double t; // время симуляции в секундах
-
-  /// Float32 (w*h) — divergence-free flow, компоненты.
-  /// Тип зависит от RpcDataTransferMode:
-  /// - zeroCopy: TransferableTypedData
-  /// - codec: Uint8List / List<int>
-  final Object flowX; // dpsi/dy
-  final Object flowY; // -dpsi/dx
-
-  /// Float32 (w*h) — “высота/длина” волосков (h-field).
-  /// Тип зависит от RpcDataTransferMode:
-  /// - zeroCopy: TransferableTypedData
-  /// - codec: Uint8List / List<int>
-  final Object height;
-
-  /// Float32 (w*h) — дополнительное поле “bulge” для вариации длины.
-  /// Тип зависит от RpcDataTransferMode:
-  /// - zeroCopy: TransferableTypedData
-  /// - codec: Uint8List / List<int>
-  final Object bulge;
+  final String kind; // тип кадра, например standard
+  final Map<String, Object> channels; // произвольные каналы (Float32 и т.п.)
+  final Map<String, dynamic>? meta;
 
   const DriftFieldFrame({
     required this.w,
     required this.h,
     required this.t,
-    required this.flowX,
-    required this.flowY,
-    required this.height,
-    required this.bulge,
+    required this.kind,
+    required this.channels,
+    this.meta,
   });
 
   @override
@@ -165,22 +183,26 @@ class DriftFieldFrame implements IRpcSerializable {
     'w': w,
     'h': h,
     't': t,
-    'flowX': _encodeBytes(flowX),
-    'flowY': _encodeBytes(flowY),
-    'height': _encodeBytes(height),
-    'bulge': _encodeBytes(bulge),
+    'kind': kind,
+    'channels': {
+      for (final e in channels.entries) e.key: _encodeBytes(e.value),
+    },
+    if (meta != null) 'meta': meta,
   };
 
   factory DriftFieldFrame.fromJson(Map<String, dynamic> json) {
-    Uint8List b64(String key) => _decodeBytes(json[key]!);
+    final Map<String, Object> decodedChannels = {};
+    final rawChannels = json['channels'] as Map<String, dynamic>? ?? {};
+    rawChannels.forEach((key, value) {
+      decodedChannels[key] = _decodeBytes(value);
+    });
     return DriftFieldFrame(
       w: (json['w'] as num).toInt(),
       h: (json['h'] as num).toInt(),
       t: (json['t'] as num).toDouble(),
-      flowX: b64('flowX'),
-      flowY: b64('flowY'),
-      height: b64('height'),
-      bulge: b64('bulge'),
+      kind: json['kind'] as String? ?? 'standard',
+      channels: decodedChannels,
+      meta: json['meta'] as Map<String, dynamic>?,
     );
   }
 
@@ -199,13 +221,17 @@ class DriftFieldFrame implements IRpcSerializable {
     if (source is List<int>) {
       return base64Encode(Uint8List.fromList(source));
     }
-    throw ArgumentError('Unsupported flow type: ${source.runtimeType}');
+    if (source is Float32List) {
+      return base64Encode(source.buffer.asUint8List());
+    }
+    throw ArgumentError('Unsupported channel type: ${source.runtimeType}');
   }
 
   static Uint8List _decodeBytes(Object source) {
     if (source is Uint8List) return source;
     if (source is List<int>) return Uint8List.fromList(source);
     if (source is String) return base64Decode(source);
+    if (source is TransferableTypedData) return _ttdToBytes(source);
     throw ArgumentError('Unsupported encoded type: ${source.runtimeType}');
   }
 }
