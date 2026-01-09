@@ -47,7 +47,14 @@ abstract interface class IScreensaverCompute {
 /// Создавайте экземпляр для каждой сессии расчета; удерживает ключ потока, чтобы
 /// отменять устаревшие запросы и не смешивать кадры между подписками.
 final class ScreensaverCompute extends ScreensaverComputeResponder {
-  ScreensaverCompute({super.dataTransferMode});
+  final int? seed;
+  final bool randomTuning;
+
+  ScreensaverCompute({
+    super.dataTransferMode,
+    this.seed,
+    this.randomTuning = false,
+  });
 
   String _framesStreamKey = '';
 
@@ -86,7 +93,10 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
         return;
       }
 
-      final config = FieldConfig.fromRequest(request);
+      final tuning = randomTuning
+          ? FieldTuning.random(seed: seed)
+          : FieldTuning();
+      final config = FieldConfig.fromRequest(request, tuning: tuning);
       final transferMode = _bufferModeFromRpc(dataTransferMode);
       fillFields(
         config,

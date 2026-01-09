@@ -23,6 +23,7 @@ void fillFields(
   final w = config.w;
   final h = config.h;
   final n = w * h;
+  final tuning = config.tuning;
   final params = buildTemporalParams(config, t);
 
   double sourceSum = 0.0;
@@ -53,10 +54,21 @@ void fillFields(
   normalizeZeroMean(bulgeTmp, bulgeSrcSum, n);
 
   // Вычисляем divergence-free поток из psi (даже в пульсациях для наклона)
-  psiToDivergenceFreeFlow(w, h, psiOut, flowX, flowY);
+  psiToDivergenceFreeFlow(w, h, psiOut, flowX, flowY, tuning);
 
-  advectAndDissipate(w, h, dt, flowX, flowY, rho, rhoTmp, bulge, bulgeTmp);
-  finalizeHeightAndBulge(rho, rhoTmp, hOut, bulge, bulgeTmp);
+  advectAndDissipate(
+    w,
+    h,
+    dt,
+    flowX,
+    flowY,
+    rho,
+    rhoTmp,
+    bulge,
+    bulgeTmp,
+    tuning.advection,
+  );
+  finalizeHeightAndBulge(rho, rhoTmp, hOut, bulge, bulgeTmp, tuning.heightPower);
 }
 
 /// Высчитывает временные коэффициенты шума/ветра один раз за кадр.
@@ -66,32 +78,48 @@ void fillFields(
 /// Используйте в начале `fillFields`, чтобы не держать дублирующий код в
 /// вложенных циклах по пикселям.
 TemporalParams buildTemporalParams(FieldConfig config, double t) {
-  final phase = config.seed * 0.031;
-  final tzPsi = t * 0.30 + phase;
-  final tzWarp = t * 0.18 + phase * 1.3;
-  final tzPhi = t * (config.pattern == 1 ? 0.25 : 0.08) + phase * 0.7;
+  final tuning = config.tuning;
+  final phase = config.seed * tuning.phaseScale;
+  final tzPsi = t * tuning.tzPsiSpeed + phase;
+  final tzWarp = t * tuning.tzWarpSpeed + phase * tuning.tzWarpPhaseScale;
+  final tzPhi = t * (config.pattern == 1 ? tuning.tzPhiSpeedPulsate : tuning.tzPhiSpeedNormal) +
+      phase * tuning.tzPhiPhaseScale;
   final isPulsate = config.pattern == 1;
 
-  final slideX = t * config.speedX * (isPulsate ? 0.20 : 0.75);
-  final slideY = t * config.speedY * (isPulsate ? 0.20 : 0.75);
+  final slideX = t * config.speedX * (isPulsate ? tuning.slideFactorPulsate : tuning.slideFactorNormal);
+  final slideY = t * config.speedY * (isPulsate ? tuning.slideFactorPulsate : tuning.slideFactorNormal);
+  final wind = tuning.wind;
   final dirX = isPulsate
-      ? math.cos(t * 0.15 + phase)
-      : math.cos(t * 0.32 + phase) + 0.55 * math.sin(t * 0.72 + phase * 1.4);
+      ? math.cos(t * wind.pulsateDirXFreq + phase)
+      : math.cos(t * wind.normalDirXFreqA + phase) +
+          wind.normalDirXWeightB *
+              math.sin(t * wind.normalDirXFreqB + phase * wind.normalDirXPhaseScaleB);
   final dirY = isPulsate
-      ? math.sin(t * 0.17 + phase * 0.8)
-      : math.sin(t * 0.29 + phase * 0.8) +
-            0.55 * math.cos(t * 0.63 + phase * 1.2);
-  final windDir = normalize(dirX, dirY, fallbackX: 0.8, fallbackY: -0.6);
+      ? math.sin(t * wind.pulsateDirYFreq + phase * wind.pulsateDirYPhaseScale)
+      : math.sin(t * wind.normalDirYFreqA + phase * wind.normalDirYPhaseScaleB) +
+          wind.normalDirYWeightB *
+              math.cos(t * wind.normalDirYFreqB + phase * wind.normalDirYPhaseScaleB);
+  final windDir = normalize(
+    dirX,
+    dirY,
+    fallbackX: wind.windDirFallbackX,
+    fallbackY: wind.windDirFallbackY,
+  );
   final windStrength = isPulsate
-      ? (0.35 + 0.55 * math.sin(t * 0.9 + phase * 0.8))
-      : (1.05 + 0.4 * math.sin(t * 0.52 + phase * 0.9));
+      ? (wind.pulsateStrengthBase +
+          wind.pulsateStrengthAmp *
+              math.sin(t * wind.pulsateStrengthFreq + phase * wind.pulsateStrengthPhaseScale))
+      : (wind.normalStrengthBase +
+          wind.normalStrengthAmp *
+              math.sin(t * wind.normalStrengthFreq + phase * wind.normalStrengthPhaseScale));
+  final gust = tuning.gust;
   final gustCX = isPulsate
-      ? 0.5
-      : 0.5 + 0.40 * math.sin(t * 0.55 + phase * 2.1);
+      ? gust.centerBase
+      : gust.centerBase + gust.centerAmp * math.sin(t * gust.centerFreqX + phase * gust.centerPhaseScaleX);
   final gustCY = isPulsate
-      ? 0.5
-      : 0.5 + 0.40 * math.cos(t * 0.50 + phase * 1.9);
-  final gustStrength = isPulsate ? 0.0 : 0.9;
+      ? gust.centerBase
+      : gust.centerBase + gust.centerAmp * math.cos(t * gust.centerFreqY + phase * gust.centerPhaseScaleY);
+  final gustStrength = isPulsate ? gust.strengthPulsate : gust.strengthNormal;
 
   return TemporalParams(
     phase: phase,
@@ -122,10 +150,11 @@ TemporalParams buildTemporalParams(FieldConfig config, double t) {
   double t,
   TemporalParams params,
 ) {
+  final warp = config.tuning.warp;
   final fx = x.toDouble();
   final fy = y.toDouble();
 
-  final warpScale = params.isPulsate ? 0.06 : 0.12;
+  final warpScale = params.isPulsate ? warp.scalePulsate : warp.scaleNormal;
   final wx = fbm3(
     (fx + params.slideX) * config.warpFreq * warpScale,
     (fy + params.slideY) * config.warpFreq * warpScale,
@@ -133,19 +162,19 @@ TemporalParams buildTemporalParams(FieldConfig config, double t) {
     config.seed ^ 0xA341316C,
   );
   final wy = fbm3(
-    (fx + 37.0 + params.slideX) * config.warpFreq * warpScale,
-    (fy - 11.0 + params.slideY) * config.warpFreq * warpScale,
-    params.tzWarp + 11.0,
+    (fx + warp.noiseOffsetX + params.slideX) * config.warpFreq * warpScale,
+    (fy + warp.noiseOffsetY + params.slideY) * config.warpFreq * warpScale,
+    params.tzWarp + warp.tzOffset,
     config.seed ^ 0xC8013EA4,
   );
 
-  final dx = (wx - 0.5) * config.warpAmp * (params.isPulsate ? 0.20 : 0.32);
-  final dy = (wy - 0.5) * config.warpAmp * (params.isPulsate ? 0.20 : 0.32);
-  final driftX = t * config.speedX * 0.35;
-  final driftY = t * config.speedY * 0.35;
+  final dx = (wx - 0.5) * config.warpAmp * (params.isPulsate ? warp.ampPulsate : warp.ampNormal);
+  final dy = (wy - 0.5) * config.warpAmp * (params.isPulsate ? warp.ampPulsate : warp.ampNormal);
+  final driftX = t * config.speedX * warp.driftScale;
+  final driftY = t * config.speedY * warp.driftScale;
 
-  final px = (fx + dx + driftX + t * 0.22) * config.baseFreq;
-  final py = (fy + dy + driftY + t * 0.27) * config.baseFreq;
+  final px = (fx + dx + driftX + t * warp.timeOffsetX) * config.baseFreq;
+  final py = (fy + dy + driftY + t * warp.timeOffsetY) * config.baseFreq;
   return (px: px, py: py);
 }
 
@@ -164,39 +193,51 @@ double computeStreamFunction(
   double py,
   TemporalParams params,
 ) {
+  final stream = config.tuning.stream;
   if (!params.isPulsate) {
     final psiLinear =
         params.windStrength * (params.windDir.x * y - params.windDir.y * x);
     final psiCurlLow = fbm3(
-      px * 0.7,
-      py * 0.6,
-      params.tzPsi * 0.8,
+      px * stream.psiCurlLowScaleX,
+      py * stream.psiCurlLowScaleY,
+      params.tzPsi * stream.psiCurlLowTzScale,
       config.seed ^ 17,
     );
     final psiCurlHi = fbm3(
-      px * 1.6,
-      py * 1.3,
-      params.tzPsi * 1.4 + 9.1,
+      px * stream.psiCurlHiScaleX,
+      py * stream.psiCurlHiScaleY,
+      params.tzPsi * stream.psiCurlHiTzScale + stream.psiCurlHiPhaseOffset,
       config.seed ^ 911,
     );
-    final gx = ((x / config.w) - params.gustCX) * 2.0;
-    final gy = ((y / config.h) - params.gustCY) * 2.0;
+    final gx = ((x / config.w) - params.gustCX) * stream.gustExtentScale;
+    final gy = ((y / config.h) - params.gustCY) * stream.gustExtentScale;
     final psiGust = windPotential(gx, gy, params.gustStrength);
     return psiLinear +
-        psiCurlLow * 0.40 +
-        psiCurlHi * (0.22 + 0.14 * math.sin(t * 0.61)) +
-        psiGust * 0.65;
+        psiCurlLow * stream.psiCurlLowWeight +
+        psiCurlHi *
+            (stream.psiCurlHiBase +
+                stream.psiCurlHiModAmp * math.sin(t * stream.psiCurlHiModFreq)) +
+        psiGust * stream.psiGustWeight;
   }
 
-  final psiCurl = fbm3(px * 0.9, py * 0.9, params.tzPsi, config.seed ^ 101);
+  final psiCurl = fbm3(
+    px * stream.psiCurlScalePulsate,
+    py * stream.psiCurlScalePulsate,
+    params.tzPsi,
+    config.seed ^ 101,
+  );
   final psiPulse = fbm3(
-    px * 0.4,
-    py * 0.4,
-    t * 0.35 + params.phase,
+    px * stream.psiPulseScale,
+    py * stream.psiPulseScale,
+    t * stream.psiPulseTimeFreq + params.phase,
     config.seed ^ 202,
   );
-  return psiCurl * 0.65 +
-      psiPulse * 0.35 * (1.0 + 1.2 * math.sin(t * 0.85 + params.phase * 0.7));
+  return psiCurl * stream.psiCurlWeightPulsate +
+      psiPulse *
+          stream.psiPulseWeight *
+          (1.0 +
+              stream.psiPulseModAmp *
+                  math.sin(t * stream.psiPulseModFreq + params.phase * stream.psiPulsePhaseScale));
 }
 
 /// Считает источники плотности и поля bulge и возвращает их без нормализации.
@@ -210,31 +251,32 @@ double computeStreamFunction(
   double py,
   TemporalParams params,
 ) {
+  final source = config.tuning.source;
   final rhoSrc = params.isPulsate
       ? (fbm3(
-                  px * 0.2,
-                  py * 0.2,
-                  params.tzPhi * 1.0,
+                  px * source.rhoFreqPulsate,
+                  py * source.rhoFreqPulsate,
+                  params.tzPhi * source.rhoTzScalePulsate,
                   config.seed ^ 0xDEADBEEF,
                 ) -
-                0.5) *
-            1.5
+                source.rhoCenterBias) *
+            source.rhoPulsateGain
       : fbm3(
-              px * 0.35,
-              py * 0.35,
-              params.tzPhi * 1.3,
+              px * source.rhoFreqNormal,
+              py * source.rhoFreqNormal,
+              params.tzPhi * source.rhoTzScaleNormal,
               config.seed ^ 0xDEADBEEF,
             ) -
-            0.5;
+            source.rhoCenterBias;
 
   final bulgeSrc =
       fbm3(
-        px * 0.12,
-        py * 0.12,
-        params.tzPhi * 1.1 + 13.7,
+        px * source.bulgeFreq,
+        py * source.bulgeFreq,
+        params.tzPhi * source.bulgeTzScale + source.bulgePhaseOffset,
         config.seed ^ 0x12345,
       ) -
-      0.5;
+      source.bulgeCenterBias;
   return (rhoSrc: rhoSrc, bulgeSrc: bulgeSrc);
 }
 
@@ -255,7 +297,8 @@ void normalizeZeroMean(Float32List buffer, double sum, int count) {
 /// [w]/[h] — размер сетки, [dt] — шаг времени. [flowX]/[flowY] — поле скорости,
 /// [rho]/[rhoTmp] и [bulge]/[bulgeTmp] — двойные буферы для плотности и
 /// пузырьков. Вызывайте после вычисления flowX/flowY и заполнения источников;
-/// функция аккуратно клампит координаты, чтобы избежать выбросов.
+/// функция аккуратно клампит координаты, чтобы избежать выбросов. [tuning]
+/// задает коэффициенты затухания, примесей и фоновых значений.
 void advectAndDissipate(
   int w,
   int h,
@@ -266,8 +309,9 @@ void advectAndDissipate(
   Float32List rhoTmp,
   Float32List bulge,
   Float32List bulgeTmp,
+  AdvectionTuning tuning,
 ) {
-  const dissipation = 0.99;
+  final dissipation = tuning.dissipation;
   for (var y = 0; y < h; y++) {
     for (var x = 0; x < w; x++) {
       final i = y * w + x;
@@ -297,12 +341,16 @@ void advectAndDissipate(
         backY / (h - 1),
       );
 
-      var r = adv * dissipation + rhoTmp[i] * 0.18 + 0.5 * (1 - dissipation);
+      var r = adv * dissipation +
+          rhoTmp[i] * tuning.rhoSourceMix +
+          tuning.rhoAmbientValue * (1 - dissipation);
       if (r < 0) r = 0;
       if (r > 1) r = 1;
       rhoTmp[i] = r;
 
-      var b = advB * 0.92 + bulgeTmp[i] * 0.60 + 0.5 * 0.08;
+      var b = advB * tuning.bulgeAdvectFactor +
+          bulgeTmp[i] * tuning.bulgeSourceMix +
+          tuning.bulgeAmbientValue * tuning.bulgeAmbientMix;
       if (b < 0) b = 0;
       if (b > 1) b = 1;
       bulgeTmp[i] = b;
@@ -313,18 +361,20 @@ void advectAndDissipate(
 /// Финализирует каналы: копирует плотность, строит высоту и обновляет bulge.
 ///
 /// [rhoTmp] копируется в [rho], [hOut] заполняется степенью плотности,
-/// [bulge] обновляется из [bulgeTmp]. Вызывайте после `advectAndDissipate`,
-/// чтобы подготовить данные к упаковке.
+/// [bulge] обновляется из [bulgeTmp]. [heightPower] управляет степенью
+/// преобразования высоты. Вызывайте после `advectAndDissipate`, чтобы
+/// подготовить данные к упаковке.
 void finalizeHeightAndBulge(
   Float32List rho,
   Float32List rhoTmp,
   Float32List hOut,
   Float32List bulge,
   Float32List bulgeTmp,
+  double heightPower,
 ) {
   for (var i = 0; i < rho.length; i++) {
     rho[i] = rhoTmp[i];
-    hOut[i] = math.pow(rho[i], 1.2).toDouble();
+    hOut[i] = math.pow(rho[i], heightPower).toDouble();
     bulge[i] = bulgeTmp[i];
   }
 }
@@ -333,18 +383,20 @@ void finalizeHeightAndBulge(
 ///
 /// [w]/[h] — размер сетки, [psi] — функция тока, [flowX]/[flowY] — выход.
 /// Используйте для генерации стабильного поля flowX/flowY перед адвекцией.
+/// [tuning] управляет усилением и клампом скорости.
 void psiToDivergenceFreeFlow(
   int w,
   int h,
   Float32List psi,
   Float32List flowX,
   Float32List flowY,
+  FieldTuning tuning,
 ) {
   int ix(int x) => x.clamp(0, w - 1);
   int iy(int y) => y.clamp(0, h - 1);
 
-  const flowAmp = 2.0; // ещё живее
-  const flowClamp = .55; // защита от выбросов
+  final flowAmp = tuning.flowAmp; // ещё живее
+  final flowClamp = tuning.flowClamp; // защита от выбросов
 
   for (var y = 0; y < h; y++) {
     final ym = iy(y - 1);
