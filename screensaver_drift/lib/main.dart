@@ -24,14 +24,18 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late Stream<DriftFieldFrame> _stream;
   late final ValueNotifier<DriftFrameData> _lastFrame;
+  late final ValueNotifier<double> _fps;
   StreamSubscription? _sub;
   late DriftFieldRequest _request;
   late PainterSettings _painterSettings;
   final _rng = Random();
+  final _fpsWatch = Stopwatch();
+  int _fpsFrames = 0;
 
   @override
   void initState() {
     _lastFrame = ValueNotifier(DriftFrameData.empty());
+    _fps = ValueNotifier(0);
     _request = DriftFieldRequest.randomWeb(_rng);
     _painterSettings = PainterSettings.randomWeb(_rng);
     super.initState();
@@ -39,9 +43,24 @@ class _MyAppState extends State<MyApp> {
 
   void _startStream() {
     _sub?.cancel();
+    _fpsFrames = 0;
+    _fpsWatch
+      ..reset()
+      ..start();
     _stream = widget.worker.stream(_request);
     _sub = _stream.listen(
-      (frame) => _lastFrame.value = DriftFrameData.fromRawFrame(frame),
+      (frame) {
+        _lastFrame.value = DriftFrameData.fromRawFrame(frame);
+        _fpsFrames++;
+        final elapsedMs = _fpsWatch.elapsedMilliseconds;
+        if (elapsedMs >= 500) {
+          _fps.value = _fpsFrames * 1000 / elapsedMs;
+          _fpsFrames = 0;
+          _fpsWatch
+            ..reset()
+            ..start();
+        }
+      },
     );
   }
 
@@ -55,6 +74,7 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     _sub?.cancel();
     widget.worker.dispose();
+    _fps.dispose();
     super.dispose();
   }
 
@@ -76,35 +96,65 @@ class _MyAppState extends State<MyApp> {
         body: ValueListenableBuilder(
           valueListenable: _lastFrame,
           builder: (context, frame, _) {
-            return SizedBox.expand(
-              child: CustomPaint(
-                painter: DriftFinalPainter(
-                  baseAlpha: _painterSettings.baseAlpha,
-                  lineWidth: _painterSettings.lineWidth,
-                  tiltGain: _painterSettings.tiltGain,
-                  tiltBrightnessGain: _painterSettings.tiltBrightnessGain,
-                  tiltZFloor: _painterSettings.tiltZFloor,
-                  hairCountX: _painterSettings.hairCountX,
-                  hairCountY: _painterSettings.hairCountY,
-                  jitter: _painterSettings.jitter,
-                  gamma: _painterSettings.gamma,
-                  normalGain: _painterSettings.normalGain,
-                  ambient: _painterSettings.ambient,
-                  diffuseK: _painterSettings.diffuseK,
-                  specularK: _painterSettings.specularK,
-                  shininess: _painterSettings.shininess,
-                  heightCut: _painterSettings.heightCut,
-                  heightCutFeather: _painterSettings.heightCutFeather,
-                  projX: _painterSettings.projX,
-                  projY: _painterSettings.projY,
-                  drawBackground: _painterSettings.drawBackground,
-                  backgroundColor: _painterSettings.backgroundColor,
-                  palette: _painterSettings.palette,
-                  bulgeScale: _painterSettings.bulgeScale,
-                  repaint: _lastFrame,
-                  getFrame: () => frame,
+            return Stack(
+              children: [
+                SizedBox.expand(
+                  child: CustomPaint(
+                    painter: DriftFinalPainter(
+                      baseAlpha: _painterSettings.baseAlpha,
+                      lineWidth: _painterSettings.lineWidth,
+                      tiltGain: _painterSettings.tiltGain,
+                      tiltBrightnessGain: _painterSettings.tiltBrightnessGain,
+                      tiltZFloor: _painterSettings.tiltZFloor,
+                      hairCountX: _painterSettings.hairCountX,
+                      hairCountY: _painterSettings.hairCountY,
+                      jitter: _painterSettings.jitter,
+                      gamma: _painterSettings.gamma,
+                      normalGain: _painterSettings.normalGain,
+                      ambient: _painterSettings.ambient,
+                      diffuseK: _painterSettings.diffuseK,
+                      specularK: _painterSettings.specularK,
+                      shininess: _painterSettings.shininess,
+                      heightCut: _painterSettings.heightCut,
+                      heightCutFeather: _painterSettings.heightCutFeather,
+                      projX: _painterSettings.projX,
+                      projY: _painterSettings.projY,
+                      drawBackground: _painterSettings.drawBackground,
+                      backgroundColor: _painterSettings.backgroundColor,
+                      palette: _painterSettings.palette,
+                      bulgeScale: _painterSettings.bulgeScale,
+                      repaint: _lastFrame,
+                      getFrame: () => frame,
+                    ),
+                  ),
                 ),
-              ),
+                Positioned(
+                  left: 12,
+                  top: 12,
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _fps,
+                    builder: (context, fps, _) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.55),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'FPS ${fps.toStringAsFixed(1)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             );
           },
         ),
