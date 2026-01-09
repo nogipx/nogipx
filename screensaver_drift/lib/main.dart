@@ -29,6 +29,7 @@ class _MyAppState extends State<MyApp> {
   late StrategyUIOption _strategy;
   late DriftFieldRequest _request;
   late PainterSettings _painterSettings;
+  final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
   final _rng = Random();
   final _fpsWatch = Stopwatch();
   int _fpsFrames = 0;
@@ -59,6 +60,58 @@ class _MyAppState extends State<MyApp> {
       _painterSettings = option.buildPainter(_rng);
       _startStream();
     });
+  }
+
+  Future<void> _showStrategySheet() async {
+    if (!mounted) return;
+    final navContext = _navKey.currentContext;
+    if (navContext == null) return;
+    final selected = await showModalBottomSheet<StrategyUIOption>(
+      context: navContext,
+      backgroundColor: Colors.black87,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            const Text(
+              'Choose strategy',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...kStrategies.map((option) {
+              final selected = option == _strategy;
+              return ListTile(
+                leading: Icon(
+                  selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                  color: selected ? Colors.amber : Colors.white70,
+                ),
+                title: Text(
+                  option.label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  option.subtitle,
+                  style: const TextStyle(color: Colors.white60),
+                ),
+                onTap: () => Navigator.of(ctx).pop(option),
+              );
+            }),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+    if (selected != null) {
+      _setStrategy(selected);
+    }
   }
 
   void _startStream() {
@@ -99,11 +152,33 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navKey,
       home: Scaffold(
-        floatingActionButton: FloatingActionButton.extended(
-          label: Text('Random ${_strategy.label}'),
-          icon: const Icon(Icons.shuffle),
-          onPressed: _randomizeCurrent,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: FloatingActionButton.extended(
+                  heroTag: 'strategyPicker',
+                  backgroundColor: Colors.black.withOpacity(0.8),
+                  icon: const Icon(Icons.auto_awesome),
+                  label: Text(_strategy.label),
+                  onPressed: _showStrategySheet,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FloatingActionButton.extended(
+                  heroTag: 'randomize',
+                  label: Text('Random ${_strategy.label}'),
+                  icon: const Icon(Icons.shuffle),
+                  onPressed: _randomizeCurrent,
+                ),
+              ),
+            ],
+          ),
         ),
         body: ValueListenableBuilder(
           valueListenable: _lastFrame,
@@ -166,41 +241,6 @@ class _MyAppState extends State<MyApp> {
                     },
                   ),
                 ),
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.55),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: kStrategies.map((option) {
-                        final selected = option == _strategy;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: ChoiceChip(
-                            label: Text(option.label),
-                            selected: selected,
-                            onSelected: (_) => _setStrategy(option),
-                            labelStyle: TextStyle(
-                              color: selected ? Colors.black : Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            selectedColor: Colors.amber.shade300,
-                            backgroundColor: Colors.white.withOpacity(0.08),
-                            side: const BorderSide(color: Colors.white24),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
               ],
             );
           },
@@ -212,7 +252,8 @@ class _MyAppState extends State<MyApp> {
 
 enum StrategyKind {
   fire('fire', 'Fire'),
-  drift('drift', 'Drift');
+  drift('drift', 'Drift'),
+  pulsate('pulsate', 'Pulsate');
 
   const StrategyKind(this.id, this.label);
   final String id;
@@ -226,14 +267,19 @@ class StrategyUIOption {
     required this.buildPainter,
   });
 
-  final StrategyKind kind;
+final StrategyKind kind;
   String get id => kind.id;
   String get label => kind.label;
+  String get subtitle => kind == StrategyKind.fire
+      ? 'Buoyant flames'
+      : kind == StrategyKind.pulsate
+          ? 'Breathing pulses'
+          : 'Windy drift';
   final DriftFieldRequest Function(Random rng) buildRequest;
   final PainterSettings Function(Random rng) buildPainter;
 }
 
-const List<StrategyUIOption> kStrategies = [
+final List<StrategyUIOption> kStrategies = [
   StrategyUIOption(
     kind: StrategyKind.fire,
     buildRequest: DriftFieldRequest.fire,
@@ -244,7 +290,15 @@ const List<StrategyUIOption> kStrategies = [
     buildRequest: DriftFieldRequest.randomWeb,
     buildPainter: PainterSettings.randomWeb,
   ),
+  StrategyUIOption(
+    kind: StrategyKind.pulsate,
+    buildRequest: (rng) => DriftFieldRequest.random(_rngPulsate(rng)),
+    buildPainter: PainterSettings.random,
+  ),
 ];
+
+// Пульсации хотим более медленный дрейф и другой диапазон — подкручиваем RNG.
+Random _rngPulsate(Random base) => Random(base.nextInt(0x7fffffff));
 
 class PainterSettings {
   const PainterSettings({
