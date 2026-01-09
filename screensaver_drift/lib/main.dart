@@ -29,6 +29,9 @@ class _MyAppState extends State<MyApp> {
   late StrategyUIOption _strategy;
   late DriftFieldRequest _request;
   late PainterSettings _painterSettings;
+  Size? _deviceSize;
+  double _hairDensity = 1.0;
+  double _fieldScale = 0.7;
   final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
   final _rng = Random();
   final _fpsWatch = Stopwatch();
@@ -39,15 +42,16 @@ class _MyAppState extends State<MyApp> {
     _lastFrame = ValueNotifier(DriftFrameData.empty());
     _fps = ValueNotifier(0);
     _strategy = kStrategies.first;
-    _request = _strategy.buildRequest(_rng);
-    _painterSettings = _strategy.buildPainter(_rng);
+    _request = _strategy.buildRequest(_rng, const Size(150, 240), _fieldScale);
+    _painterSettings = _strategy.buildPainter(_rng, _hairDensity);
     super.initState();
   }
 
   void _randomizeCurrent() {
     setState(() {
-      _request = _strategy.buildRequest(_rng);
-      _painterSettings = _strategy.buildPainter(_rng);
+      final size = _deviceSize ?? _usableSize(context);
+      _request = _strategy.buildRequest(_rng, size, _fieldScale);
+      _painterSettings = _strategy.buildPainter(_rng, _hairDensity);
       _startStream();
     });
   }
@@ -56,8 +60,9 @@ class _MyAppState extends State<MyApp> {
     if (option == _strategy) return;
     setState(() {
       _strategy = option;
-      _request = option.buildRequest(_rng);
-      _painterSettings = option.buildPainter(_rng);
+      final size = _deviceSize ?? _usableSize(context);
+      _request = option.buildRequest(_rng, size, _fieldScale);
+      _painterSettings = option.buildPainter(_rng, _hairDensity);
       _startStream();
     });
   }
@@ -114,6 +119,20 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  bool _maybeUpdateSize(BuildContext context) {
+    final size = _usableSize(context);
+    if (_deviceSize == null || _sizeChanged(_deviceSize!, size)) {
+      setState(() {
+        _deviceSize = size;
+        _request = _strategy.buildRequest(_rng, size, _fieldScale);
+        _painterSettings = _strategy.buildPainter(_rng, _hairDensity);
+        _startStream();
+      });
+      return true;
+    }
+    return false;
+  }
+
   void _startStream() {
     _sub?.cancel();
     _fpsFrames = 0;
@@ -137,7 +156,10 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void didChangeDependencies() {
-    _startStream();
+    final changed = _maybeUpdateSize(context);
+    if (!changed) {
+      _startStream();
+    }
     super.didChangeDependencies();
   }
 
@@ -241,6 +263,42 @@ class _MyAppState extends State<MyApp> {
                     },
                   ),
                 ),
+                Positioned(
+                  left: 12,
+                  bottom: 110,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    width: 200,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Hair density',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                        ),
+                        Slider(
+                          value: _hairDensity,
+                          min: 0.5,
+                          max: 1.6,
+                          divisions: 11,
+                          activeColor: Colors.amber,
+                          inactiveColor: Colors.white24,
+                          label: _hairDensity.toStringAsFixed(2),
+                          onChanged: (v) {
+                            setState(() {
+                              _hairDensity = v;
+                              _painterSettings = _strategy.buildPainter(_rng, _hairDensity);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             );
           },
@@ -267,7 +325,7 @@ class StrategyUIOption {
     required this.buildPainter,
   });
 
-final StrategyKind kind;
+  final StrategyKind kind;
   String get id => kind.id;
   String get label => kind.label;
   String get subtitle => kind == StrategyKind.fire
@@ -275,30 +333,43 @@ final StrategyKind kind;
       : kind == StrategyKind.pulsate
           ? 'Breathing pulses'
           : 'Windy drift';
-  final DriftFieldRequest Function(Random rng) buildRequest;
-  final PainterSettings Function(Random rng) buildPainter;
+  final DriftFieldRequest Function(Random rng, Size deviceSize, double scale) buildRequest;
+  final PainterSettings Function(Random rng, double density) buildPainter;
 }
 
 final List<StrategyUIOption> kStrategies = [
   StrategyUIOption(
     kind: StrategyKind.fire,
-    buildRequest: DriftFieldRequest.fire,
-    buildPainter: PainterSettings.fire,
+    buildRequest: _fireRequestFromDevice,
+    buildPainter: (rng, density) => PainterSettings.fireWithDensity(rng, density: density),
   ),
   StrategyUIOption(
     kind: StrategyKind.drift,
-    buildRequest: DriftFieldRequest.randomWeb,
-    buildPainter: PainterSettings.randomWeb,
+    buildRequest: _driftRequestFromDevice,
+    buildPainter: (rng, density) => PainterSettings.randomWebWithDensity(rng, density: density),
   ),
   StrategyUIOption(
     kind: StrategyKind.pulsate,
-    buildRequest: (rng) => DriftFieldRequest.random(_rngPulsate(rng)),
-    buildPainter: PainterSettings.random,
+    buildRequest: _pulsateRequestFromDevice,
+    buildPainter: (rng, density) => PainterSettings.randomWithDensity(rng, density: density),
   ),
 ];
 
 // Пульсации хотим более медленный дрейф и другой диапазон — подкручиваем RNG.
 Random _rngPulsate(Random base) => Random(base.nextInt(0x7fffffff));
+
+bool _sizeChanged(Size a, Size b) {
+  return (a.width - b.width).abs() > 0.5 || (a.height - b.height).abs() > 0.5;
+}
+
+Size _usableSize(BuildContext context) {
+  final mq = MediaQuery.of(context);
+  final pad = mq.padding;
+  return Size(
+    mq.size.width - pad.left - pad.right,
+    mq.size.height - pad.top - pad.bottom,
+  );
+}
 
 class PainterSettings {
   const PainterSettings({
@@ -375,16 +446,21 @@ class PainterSettings {
   );
 
   factory PainterSettings.random(Random rng) {
+    return PainterSettings.randomWithDensity(rng);
+  }
+
+  factory PainterSettings.randomWithDensity(Random rng, {double density = 1.0}) {
     double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
     int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
+    int scaleInt(int v) => (v * density).clamp(10, 10000).round();
     return PainterSettings(
       baseAlpha: lerp(0.65, 0.9),
       lineWidth: lerp(1.0, 1.5),
       tiltGain: lerp(18, 30),
       tiltBrightnessGain: lerp(0.4, 1.0),
       tiltZFloor: lerp(0.18, 0.32),
-      hairCountX: lerpInt(120, 220),
-      hairCountY: lerpInt(50, 110),
+      hairCountX: scaleInt(lerpInt(120, 220)),
+      hairCountY: scaleInt(lerpInt(50, 110)),
       jitter: lerp(0.08, 0.2),
       gamma: lerp(1.4, 1.9),
       normalGain: lerp(3.0, 5.0),
@@ -404,16 +480,21 @@ class PainterSettings {
   }
 
   factory PainterSettings.randomWeb(Random rng) {
+    return PainterSettings.randomWebWithDensity(rng);
+  }
+
+  factory PainterSettings.randomWebWithDensity(Random rng, {double density = 1.0}) {
     double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
     int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
+    int scaleInt(int v) => (v * density).clamp(10, 10000).round();
     return PainterSettings(
       baseAlpha: lerp(0.7, 0.9),
       lineWidth: lerp(1.0, 1.3),
       tiltGain: lerp(14, 22),
       tiltBrightnessGain: lerp(0.5, 0.9),
       tiltZFloor: lerp(0.18, 0.30),
-      hairCountX: lerpInt(90, 110),
-      hairCountY: lerpInt(80, 90),
+      hairCountX: scaleInt(lerpInt(90, 110)),
+      hairCountY: scaleInt(lerpInt(80, 90)),
       jitter: lerp(0.18, 0.26),
       gamma: lerp(1.4, 1.8),
       normalGain: lerp(3.0, 4.5),
@@ -433,16 +514,21 @@ class PainterSettings {
   }
 
   factory PainterSettings.fire(Random rng) {
+    return PainterSettings.fireWithDensity(rng);
+  }
+
+  factory PainterSettings.fireWithDensity(Random rng, {double density = 1.0}) {
     double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
     int lerpInt(int a, int b) => a + (rng.nextDouble() * (b - a)).round();
+    int scaleInt(int v) => (v * density).clamp(10, 10000).round();
     return PainterSettings(
       baseAlpha: lerp(0.78, 0.9),
       lineWidth: lerp(1.15, 1.45),
       tiltGain: lerp(14, 20),
       tiltBrightnessGain: lerp(0.75, 1.05),
       tiltZFloor: lerp(0.12, 0.2),
-      hairCountX: lerpInt(110, 140),
-      hairCountY: lerpInt(180, 220),
+      hairCountX: scaleInt(lerpInt(110, 140)),
+      hairCountY: scaleInt(lerpInt(180, 220)),
       jitter: lerp(0.16, 0.26),
       gamma: lerp(1.35, 1.55),
       normalGain: lerp(3.2, 4.0),
@@ -517,4 +603,70 @@ class PainterSettings {
     ];
     return presets[rng.nextInt(presets.length)];
   }
+}
+DriftFieldRequest _fireRequestFromDevice(Random rng, Size size, double scale) {
+  final shortSide = size.shortestSide;
+  final longSide = size.longestSide;
+  final aspect = (longSide / shortSide).clamp(1.0, 2.2);
+
+  final targetW = (shortSide * 0.55 * scale).clamp(120.0, 340.0);
+  final targetH = (targetW * aspect).clamp(targetW * 0.9, targetW * 2.4);
+
+  final w = targetW.round();
+  final h = targetH.round();
+  double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
+    return DriftFieldRequest(
+      w: w,
+      h: h,
+      fps: 60,
+    seed: rng.nextInt(0x7fffffff),
+    baseFreq: lerp(0.020, 0.030),
+    warpFreq: lerp(0.03, 0.055),
+    warpAmp: lerp(6.5, 11.0),
+    speedX: lerp(-0.35, 0.35),
+    speedY: lerp(-1.2, -0.6),
+    strategy: StrategyKind.fire.id,
+    strategyParams: {
+      'fuelBand': 0.14,
+      'fuelSpread': 2.2,
+    },
+  );
+}
+
+DriftFieldRequest _driftRequestFromDevice(Random rng, Size size, double scale) {
+  final shortSide = size.shortestSide;
+  final targetW = (shortSide * 0.32 * scale).clamp(100.0, 320.0);
+  final h = (targetW * (size.height / size.width)).round();
+  double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
+  return DriftFieldRequest(
+    w: targetW.round(),
+    h: h,
+    fps: 60,
+    seed: rng.nextInt(0x7fffffff),
+    baseFreq: lerp(0.016, 0.028),
+    warpFreq: lerp(0.02, 0.05),
+    warpAmp: lerp(5.5, 10.0),
+    speedX: lerp(-1.0, 1.0),
+    speedY: lerp(-1.0, 1.0),
+    strategy: StrategyKind.drift.id,
+  );
+}
+
+DriftFieldRequest _pulsateRequestFromDevice(Random rng, Size size, double scale) {
+  final shortSide = size.shortestSide;
+  final targetW = (shortSide * 0.30 * scale).clamp(100.0, 300.0);
+  final h = (targetW * (size.height / size.width)).round();
+  double lerp(double a, double b) => a + (b - a) * rng.nextDouble();
+  return DriftFieldRequest(
+    w: targetW.round(),
+    h: h,
+    fps: 60,
+    seed: rng.nextInt(0x7fffffff),
+    baseFreq: lerp(0.018, 0.030),
+    warpFreq: lerp(0.03, 0.06),
+    warpAmp: lerp(8.0, 16.0),
+    speedX: lerp(-1.5, 1.5),
+    speedY: lerp(-1.5, 1.5),
+    strategy: StrategyKind.pulsate.id,
+  );
 }

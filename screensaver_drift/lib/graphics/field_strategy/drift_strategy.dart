@@ -312,6 +312,8 @@ void _advectAndDissipate(
   AdvectionTuning tuning,
 ) {
   final dissipation = tuning.dissipation;
+  final invW = 1.0 / math.max(1, w - 1);
+  final invH = 1.0 / math.max(1, h - 1);
   for (var y = 0; y < h; y++) {
     for (var x = 0; x < w; x++) {
       final i = y * w + x;
@@ -330,15 +332,15 @@ void _advectAndDissipate(
         rho,
         w,
         h,
-        backX / (w - 1),
-        backY / (h - 1),
+        backX * invW,
+        backY * invH,
       );
       final advB = sampleBilinearClamp(
         bulge,
         w,
         h,
-        backX / (w - 1),
-        backY / (h - 1),
+        backX * invW,
+        backY * invH,
       );
 
       var r =
@@ -368,9 +370,10 @@ void _finalizeHeightAndBulge(
   Float32List bulgeTmp,
   double heightPower,
 ) {
+  final lut = _HeightPowLut.of(heightPower);
   for (var i = 0; i < rho.length; i++) {
     rho[i] = rhoTmp[i];
-    hOut[i] = math.pow(rho[i], heightPower).toDouble();
+    hOut[i] = lut.sample(rho[i]);
     bulge[i] = bulgeTmp[i];
   }
 }
@@ -416,5 +419,32 @@ void _psiToDivergenceFreeFlow(
       flowX[c] = fx;
       flowY[c] = fy;
     }
+  }
+}
+
+class _HeightPowLut {
+  _HeightPowLut._(this.power)
+      : values = Float32List(_size) {
+    for (var i = 0; i < _size; i++) {
+      final x = i / (_size - 1);
+      values[i] = math.pow(x, power).toDouble();
+    }
+  }
+
+  static const int _size = 1024;
+  final double power;
+  final Float32List values;
+
+  double sample(double x) {
+    final clamped = x.clamp(0.0, 1.0);
+    final idx = (clamped * (_size - 1)).round();
+    return values[idx];
+  }
+
+  static final Map<int, _HeightPowLut> _cache = {};
+
+  static _HeightPowLut of(double power) {
+    final key = (power * 1000).round();
+    return _cache.putIfAbsent(key, () => _HeightPowLut._(power));
   }
 }

@@ -2,14 +2,14 @@ part of '../_index.dart';
 
 class FireFieldState extends FieldStrategyState {
   FireFieldState(int n, this.w, this.h)
-      : vx = Float32List(n),
-        vy = Float32List(n),
-        vxTmp = Float32List(n),
-        vyTmp = Float32List(n),
-        temp = Float32List(n),
-        tempTmp = Float32List(n),
-        fuel = Float32List(n),
-        fuelTmp = Float32List(n);
+    : vx = Float32List(n),
+      vy = Float32List(n),
+      vxTmp = Float32List(n),
+      vyTmp = Float32List(n),
+      temp = Float32List(n),
+      tempTmp = Float32List(n),
+      fuel = Float32List(n),
+      fuelTmp = Float32List(n);
 
   final int w;
   final int h;
@@ -29,8 +29,13 @@ class FireStrategy extends FieldStrategy {
   @override
   String get id => 'fire';
 
-  double _param(Map<String, dynamic>? p, String key, double def,
-      {double min = double.negativeInfinity, double max = double.infinity}) {
+  double _param(
+    Map<String, dynamic>? p,
+    String key,
+    double def, {
+    double min = double.negativeInfinity,
+    double max = double.infinity,
+  }) {
     final v = p?[key];
     if (v is num) {
       final d = v.toDouble();
@@ -64,11 +69,29 @@ class FireStrategy extends FieldStrategy {
     final twistStrength = _param(params, 'twist', 0.65, min: 0.0, max: 2.0);
     final twistScale = _param(params, 'twistScale', 1.1, min: 0.3, max: 3.0);
     final twistFreq = _param(params, 'twistFreq', 0.9, min: 0.1, max: 3.0);
+    final fuelBand = _param(params, 'fuelBand', 0.14, min: 0.02, max: 0.4);
+    final fuelSpread = _param(params, 'fuelSpread', 2.2, min: 0.5, max: 4.0);
 
-    _injectFuelAndHeat(s, fuelRate, fuelJitter, dt, config.seed);
+    _injectFuelAndHeat(
+      s,
+      fuelRate,
+      fuelJitter,
+      dt,
+      config.seed,
+      bandNormHeight: fuelBand,
+      spread: fuelSpread,
+    );
     _advectVelocity(s, dt);
     _applyBuoyancy(s, buoyancy, dt, maxSpeed);
-    _addTwist(s, t, twistStrength, twistScale, twistFreq, maxSpeed, config.seed);
+    _addTwist(
+      s,
+      t,
+      twistStrength,
+      twistScale,
+      twistFreq,
+      maxSpeed,
+      config.seed,
+    );
     _dampenVelocity(s, vDamp);
     _advectScalar(s, s.temp, s.tempTmp, dt);
     _advectScalar(s, s.fuel, s.fuelTmp, dt);
@@ -100,11 +123,13 @@ class FireStrategy extends FieldStrategy {
     double rate,
     double jitter,
     double dt,
-    int seed,
-  ) {
+    int seed, {
+    double bandNormHeight = 0.12,
+    double spread = 2.2,
+  }) {
     final w = s.w;
     final h = s.h;
-    final band = math.max(2, (h * 0.12).round());
+    final band = math.max(2, (h * bandNormHeight).round());
     final invW = 1.0 / math.max(1, w - 1);
     for (var y = 0; y < band; y++) {
       final v = y / math.max(1, band - 1);
@@ -112,10 +137,14 @@ class FireStrategy extends FieldStrategy {
         final i = y * w + x;
         final u = x * invW;
         final jitterVal = hash01_3(x, y, 0, seed ^ 0xFACE) * 2 - 1;
-        final profile = smooth01(1.0 - (u - 0.5).abs() * 2.2);
-        final fuelAdd = rate * dt * (0.6 + profile * 0.8 + jitterVal * jitter * 0.4);
+        final profile = smooth01(1.0 - (u - 0.5).abs() * spread);
+        final fuelAdd =
+            rate * dt * (0.6 + profile * 0.8 + jitterVal * jitter * 0.4);
         s.fuel[i] = (s.fuel[i] + fuelAdd).clamp(0.0, 10.0);
-        s.temp[i] = (s.temp[i] + fuelAdd * (0.7 + 0.3 * (1 - v))).clamp(0.0, 10.0);
+        s.temp[i] = (s.temp[i] + fuelAdd * (0.7 + 0.3 * (1 - v))).clamp(
+          0.0,
+          10.0,
+        );
       }
     }
   }
@@ -171,12 +200,18 @@ class FireStrategy extends FieldStrategy {
     field.setAll(0, tmp);
   }
 
-  void _applyBuoyancy(FireFieldState s, double buoyancy, double dt, double maxSpeed) {
+  void _applyBuoyancy(
+    FireFieldState s,
+    double buoyancy,
+    double dt,
+    double maxSpeed,
+  ) {
     final w = s.w;
     final h = s.h;
     for (var i = 0; i < s.temp.length; i++) {
       final tNorm = s.temp[i];
-      s.vy[i] = (s.vy[i] + buoyancy * tNorm * dt).clamp(-maxSpeed, maxSpeed);
+      // Координата y растёт вниз, поэтому для подъёма используем отрицательное направление.
+      s.vy[i] = (s.vy[i] - buoyancy * tNorm * dt).clamp(-maxSpeed, maxSpeed);
     }
     _projectVelocity(s, dt);
   }
@@ -197,12 +232,8 @@ class FireStrategy extends FieldStrategy {
     final invH = 1.0 / math.max(1, h - 1);
     for (var y = 0; y < h; y++) {
       final v = y * invH;
-      final swirl = fbm3(
-        0.5 * scale,
-        v * scale,
-        t * freq + seed * 0.01,
-        seed ^ 0xF00F,
-      ) *
+      final swirl =
+          fbm3(0.5 * scale, v * scale, t * freq + seed * 0.01, seed ^ 0xF00F) *
           (1.0 - v) *
           strength;
       for (var x = 0; x < w; x++) {
