@@ -54,7 +54,7 @@ class DriftFieldRequest implements IRpcSerializable {
       warpAmp: lerp(8.0, 16.0),
       speedX: lerp(-1.5, 1.5),
       speedY: lerp(-1.5, 1.5),
-      pattern: rng.nextBool() ? 0 : 1,
+      pattern: 1,
     );
   }
 

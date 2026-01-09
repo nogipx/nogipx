@@ -48,20 +48,18 @@ class _MyAppState extends State<MyApp> {
       ..reset()
       ..start();
     _stream = widget.worker.stream(_request);
-    _sub = _stream.listen(
-      (frame) {
-        _lastFrame.value = DriftFrameData.fromRawFrame(frame);
-        _fpsFrames++;
-        final elapsedMs = _fpsWatch.elapsedMilliseconds;
-        if (elapsedMs >= 500) {
-          _fps.value = _fpsFrames * 1000 / elapsedMs;
-          _fpsFrames = 0;
-          _fpsWatch
-            ..reset()
-            ..start();
-        }
-      },
-    );
+    _sub = _stream.listen((frame) {
+      _lastFrame.value = DriftFrameData.fromRawFrame(frame);
+      _fpsFrames++;
+      final elapsedMs = _fpsWatch.elapsedMilliseconds;
+      if (elapsedMs >= 500) {
+        _fps.value = _fpsFrames * 1000 / elapsedMs;
+        _fpsFrames = 0;
+        _fpsWatch
+          ..reset()
+          ..start();
+      }
+    });
   }
 
   @override

@@ -1,8 +1,8 @@
 #!/usr/bin/env just --justfile
 
 compile_worker:
-  fvm dart compile js lib/isolate_worker.dart -o web/rpc_isolate_worker.js
-#  fvm dart run isolate_manager:generate
+  #fvm dart compile js lib/isolate_worker.dart -o web/rpcIsolateWorker.js
+  fvm dart run isolate_manager:generate --debug
 
 build_runner:
   fvm dart run build_runner build --delete-conflicting-outputs
