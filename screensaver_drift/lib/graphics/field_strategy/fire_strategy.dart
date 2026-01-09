@@ -1,150 +1,275 @@
 part of '../_index.dart';
 
+class FireFieldState extends FieldStrategyState {
+  FireFieldState(int n, this.w, this.h)
+      : vx = Float32List(n),
+        vy = Float32List(n),
+        vxTmp = Float32List(n),
+        vyTmp = Float32List(n),
+        temp = Float32List(n),
+        tempTmp = Float32List(n),
+        fuel = Float32List(n),
+        fuelTmp = Float32List(n);
+
+  final int w;
+  final int h;
+  final Float32List vx;
+  final Float32List vy;
+  final Float32List vxTmp;
+  final Float32List vyTmp;
+  final Float32List temp;
+  final Float32List tempTmp;
+  final Float32List fuel;
+  final Float32List fuelTmp;
+}
+
 class FireStrategy extends FieldStrategy {
   const FireStrategy();
 
   @override
-  TemporalParams buildTemporalParams(FieldConfig config, double t) {
-    final tuning = config.tuning;
-    final phase = config.seed * tuning.phaseScale;
-    final tzPsi = t * tuning.tzPsiSpeed * 0.55 + phase;
-    final tzWarp =
-        t * tuning.tzWarpSpeed * 0.42 + phase * tuning.tzWarpPhaseScale;
-    final tzPhi =
-        t * tuning.tzPhiSpeedNormal * 1.35 + phase * tuning.tzPhiPhaseScale;
+  String get id => 'fire';
 
-    final slideX = t * config.speedX * tuning.slideFactorPulsate * 0.5;
-    final slideY = t * (-0.65 + config.speedY * 0.25);
-
-    final wind = tuning.wind;
-    final dirX = math.sin(t * wind.pulsateDirXFreq + phase * 0.6) * 0.35;
-    final dirY = -1.0 + 0.08 * math.cos(t * wind.pulsateDirYFreq + phase * 0.5);
-    final windDir = normalize(dirX, dirY, fallbackX: 0.0, fallbackY: -1.0);
-    final windStrength =
-        1.4 +
-        0.6 *
-            math.sin(
-              t * wind.pulsateStrengthFreq * 1.1 +
-                  phase * wind.pulsateStrengthPhaseScale * 1.2,
-            );
-
-    final gust = tuning.gust;
-    final gustCX =
-        0.52 +
-        0.18 *
-            math.sin(
-              t * gust.centerFreqX * 0.9 + phase * gust.centerPhaseScaleX * 0.8,
-            );
-    final gustCY =
-        0.18 +
-        0.12 *
-            math.cos(
-              t * gust.centerFreqY * 0.8 + phase * gust.centerPhaseScaleY * 0.7,
-            );
-
-    return TemporalParams(
-      phase: phase,
-      tzPsi: tzPsi,
-      tzWarp: tzWarp,
-      tzPhi: tzPhi,
-      slideX: slideX,
-      slideY: slideY,
-      windDir: windDir,
-      windStrength: windStrength,
-      gustCX: gustCX,
-      gustCY: gustCY,
-      gustStrength: gust.strengthNormal * 1.4,
-      warpScale: tuning.warp.scalePulsate * 0.55,
-      warpAmp: tuning.warp.ampNormal * 0.55,
-      driftScale: tuning.warp.driftScale * 0.6,
-      baseFreqScale: 1.25,
-    );
+  double _param(Map<String, dynamic>? p, String key, double def,
+      {double min = double.negativeInfinity, double max = double.infinity}) {
+    final v = p?[key];
+    if (v is num) {
+      final d = v.toDouble();
+      return d.clamp(min, max);
+    }
+    return def;
   }
 
   @override
-  ({double px, double py}) warp(
-    int x,
-    int y,
-    FieldConfig config,
-    double t,
-    TemporalParams params,
-  ) => _warpCommon(x, y, config, t, params);
-
-  @override
-  double stream(
-    FieldConfig config,
-    int x,
-    int y,
-    double t,
-    double px,
-    double py,
-    TemporalParams params,
-  ) {
-    final stream = config.tuning.stream;
-    final u = x / config.w;
-    final v = y / config.h;
-    final nearBase = smooth01(1.0 - v);
-    final psiUp = (u - 0.5) * params.windStrength * (1.2 + nearBase * 1.4);
-    final psiCurl = fbm3(
-      px * stream.psiCurlLowScaleX * 1.4,
-      py * stream.psiCurlLowScaleY * 1.2,
-      params.tzPsi * stream.psiCurlLowTzScale * 1.1,
-      config.seed ^ 717,
-    );
-    final tongues = fbm3(
-      px * stream.psiPulseScale * 1.8,
-      py * stream.psiPulseScale * 1.35,
-      t * stream.psiPulseTimeFreq * 1.15 + params.phase,
-      config.seed ^ 909,
-    );
-    final lean = math.sin((v + t * 0.45) * 5.5 + params.phase * 0.8) * 0.18;
-    return psiUp +
-        psiCurl * (stream.psiCurlLowWeight * 1.25) +
-        tongues * (stream.psiPulseWeight * 1.6) * (0.4 + nearBase) +
-        lean;
+  FieldStrategyState createState(FieldConfig config) {
+    return FireFieldState(config.w * config.h, config.w, config.h);
   }
 
   @override
-  ({double rhoSrc, double bulgeSrc}) sources(
-    FieldConfig config,
-    double px,
-    double py,
-    TemporalParams params,
-    int x,
-    int y,
-  ) {
-    final source = config.tuning.source;
-    final v = y / math.max(1, config.h - 1);
-    final nearBase = smooth01(1.0 - v);
-    final flicker =
-        fbm3(
-          px * source.rhoFreqPulsate * 1.4,
-          py * source.rhoFreqPulsate * 1.1,
-          params.tzPhi * source.rhoTzScalePulsate * 1.35,
-          config.seed ^ 0xF1A6E,
-        ) -
-        source.rhoCenterBias * 0.65;
-    final tongues = fbm3(
-      px * (source.rhoFreqNormal * 1.65 + 0.01),
-      py * (source.rhoFreqNormal * 1.1 + 0.02),
-      params.tzPhi * source.rhoTzScaleNormal * 1.35,
-      config.seed ^ 0xFA11E,
-    );
-    final rhoSrc =
-        (flicker * (0.75 + nearBase * 1.2) + tongues * 0.85) *
-        math.pow(nearBase, 1.2);
+  FieldFrame generateFrame({
+    required FieldConfig config,
+    required FieldStrategyState state,
+    required double t,
+    required double dt,
+    required BufferTransferMode transferMode,
+  }) {
+    final s = state as FireFieldState;
+    final params = config.strategyParams;
 
-    final bulgeSrc =
-        (fbm3(
-              (px + x * 0.02) * source.bulgeFreq * 1.2,
-              (py + y * 0.02) * source.bulgeFreq,
-              params.tzPhi * source.bulgeTzScale * 1.2 +
-                  source.bulgePhaseOffset,
-              config.seed ^ 0xF17E,
-            ) -
-            source.bulgeCenterBias * 0.4) *
-        (0.5 + nearBase) *
-        math.pow(nearBase, 1.3);
-    return (rhoSrc: rhoSrc, bulgeSrc: bulgeSrc);
+    final buoyancy = _param(params, 'buoyancy', 2.3, min: 0.1, max: 5.0);
+    final cooling = _param(params, 'cooling', 0.65, min: 0.0, max: 2.0);
+    final fuelRate = _param(params, 'fuelRate', 2.0, min: 0.0, max: 5.0);
+    final fuelJitter = _param(params, 'fuelJitter', 0.25, min: 0.0, max: 1.0);
+    final vDamp = _param(params, 'damping', 0.05, min: 0.0, max: 1.0);
+    final maxSpeed = _param(params, 'maxSpeed', 2.2, min: 0.5, max: 6.0);
+    final twistStrength = _param(params, 'twist', 0.65, min: 0.0, max: 2.0);
+    final twistScale = _param(params, 'twistScale', 1.1, min: 0.3, max: 3.0);
+    final twistFreq = _param(params, 'twistFreq', 0.9, min: 0.1, max: 3.0);
+
+    _injectFuelAndHeat(s, fuelRate, fuelJitter, dt, config.seed);
+    _advectVelocity(s, dt);
+    _applyBuoyancy(s, buoyancy, dt, maxSpeed);
+    _addTwist(s, t, twistStrength, twistScale, twistFreq, maxSpeed, config.seed);
+    _dampenVelocity(s, vDamp);
+    _advectScalar(s, s.temp, s.tempTmp, dt);
+    _advectScalar(s, s.fuel, s.fuelTmp, dt);
+    _cool(s, cooling, dt);
+    _normalizeToHeight(s.temp, s.fuel);
+
+    final flowClamp = 3.0;
+    _clampField(s.vx, -flowClamp, flowClamp);
+    _clampField(s.vy, -flowClamp, flowClamp);
+
+    return buildFieldFrame(
+      transferMode,
+      s.w,
+      s.h,
+      t,
+      kind: 'standard',
+      channels: {
+        'flowX': s.vx,
+        'flowY': s.vy,
+        'height': s.temp,
+        'bulge': s.fuel,
+      },
+      meta: {'kind': 'fire'},
+    );
+  }
+
+  void _injectFuelAndHeat(
+    FireFieldState s,
+    double rate,
+    double jitter,
+    double dt,
+    int seed,
+  ) {
+    final w = s.w;
+    final h = s.h;
+    final band = math.max(2, (h * 0.12).round());
+    final invW = 1.0 / math.max(1, w - 1);
+    for (var y = 0; y < band; y++) {
+      final v = y / math.max(1, band - 1);
+      for (var x = 0; x < w; x++) {
+        final i = y * w + x;
+        final u = x * invW;
+        final jitterVal = hash01_3(x, y, 0, seed ^ 0xFACE) * 2 - 1;
+        final profile = smooth01(1.0 - (u - 0.5).abs() * 2.2);
+        final fuelAdd = rate * dt * (0.6 + profile * 0.8 + jitterVal * jitter * 0.4);
+        s.fuel[i] = (s.fuel[i] + fuelAdd).clamp(0.0, 10.0);
+        s.temp[i] = (s.temp[i] + fuelAdd * (0.7 + 0.3 * (1 - v))).clamp(0.0, 10.0);
+      }
+    }
+  }
+
+  void _advectVelocity(FireFieldState s, double dt) {
+    final w = s.w;
+    final h = s.h;
+    final invW = 1.0 / math.max(1, w - 1);
+    final invH = 1.0 / math.max(1, h - 1);
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        final i = y * w + x;
+        final vx = s.vx[i];
+        final vy = s.vy[i];
+
+        final backX = (x.toDouble() - vx * dt * w).clamp(0.0, w - 1.0);
+        final backY = (y.toDouble() - vy * dt * h).clamp(0.0, h - 1.0);
+        final u = backX * invW;
+        final v = backY * invH;
+
+        s.vxTmp[i] = sampleBilinearClamp(s.vx, w, h, u, v);
+        s.vyTmp[i] = sampleBilinearClamp(s.vy, w, h, u, v);
+      }
+    }
+    s.vx.setAll(0, s.vxTmp);
+    s.vy.setAll(0, s.vyTmp);
+  }
+
+  void _advectScalar(
+    FireFieldState s,
+    Float32List field,
+    Float32List tmp,
+    double dt,
+  ) {
+    final w = s.w;
+    final h = s.h;
+    final invW = 1.0 / math.max(1, w - 1);
+    final invH = 1.0 / math.max(1, h - 1);
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        final i = y * w + x;
+        final vx = s.vx[i];
+        final vy = s.vy[i];
+
+        final backX = (x.toDouble() - vx * dt * w).clamp(0.0, w - 1.0);
+        final backY = (y.toDouble() - vy * dt * h).clamp(0.0, h - 1.0);
+        final u = backX * invW;
+        final v = backY * invH;
+
+        tmp[i] = sampleBilinearClamp(field, w, h, u, v);
+      }
+    }
+    field.setAll(0, tmp);
+  }
+
+  void _applyBuoyancy(FireFieldState s, double buoyancy, double dt, double maxSpeed) {
+    final w = s.w;
+    final h = s.h;
+    for (var i = 0; i < s.temp.length; i++) {
+      final tNorm = s.temp[i];
+      s.vy[i] = (s.vy[i] + buoyancy * tNorm * dt).clamp(-maxSpeed, maxSpeed);
+    }
+    _projectVelocity(s, dt);
+  }
+
+  void _addTwist(
+    FireFieldState s,
+    double t,
+    double strength,
+    double scale,
+    double freq,
+    double maxSpeed,
+    int seed,
+  ) {
+    if (strength <= 0) return;
+    final w = s.w;
+    final h = s.h;
+    final invW = 1.0 / math.max(1, w - 1);
+    final invH = 1.0 / math.max(1, h - 1);
+    for (var y = 0; y < h; y++) {
+      final v = y * invH;
+      final swirl = fbm3(
+        0.5 * scale,
+        v * scale,
+        t * freq + seed * 0.01,
+        seed ^ 0xF00F,
+      ) *
+          (1.0 - v) *
+          strength;
+      for (var x = 0; x < w; x++) {
+        final i = y * w + x;
+        s.vx[i] = (s.vx[i] + swirl * (0.6 + math.sin(t * 0.5 + v * 8.0) * 0.4))
+            .clamp(-maxSpeed, maxSpeed);
+      }
+    }
+    _projectVelocity(s, 0);
+  }
+
+  void _projectVelocity(FireFieldState s, double dt) {
+    final w = s.w;
+    final h = s.h;
+    for (var y = 1; y < h - 1; y++) {
+      for (var x = 1; x < w - 1; x++) {
+        final i = y * w + x;
+        final vx = (s.vx[i - 1] + s.vx[i + 1]) * 0.5;
+        final vy = (s.vy[i - w] + s.vy[i + w]) * 0.5;
+        s.vxTmp[i] = vx;
+        s.vyTmp[i] = vy;
+      }
+    }
+    for (var i = 0; i < s.vx.length; i++) {
+      s.vx[i] = s.vxTmp[i].clamp(-5.0, 5.0);
+      s.vy[i] = s.vyTmp[i].clamp(-5.0, 5.0);
+    }
+  }
+
+  void _dampenVelocity(FireFieldState s, double damping) {
+    final factor = (1.0 - damping).clamp(0.0, 1.0);
+    for (var i = 0; i < s.vx.length; i++) {
+      s.vx[i] *= factor;
+      s.vy[i] *= factor;
+    }
+  }
+
+  void _cool(FireFieldState s, double cooling, double dt) {
+    final decay = (1.0 - cooling * dt).clamp(0.0, 1.0);
+    for (var i = 0; i < s.temp.length; i++) {
+      s.temp[i] *= decay;
+      s.fuel[i] *= decay * 0.97;
+    }
+  }
+
+  void _normalizeToHeight(Float32List temp, Float32List fuel) {
+    double maxT = 1e-6;
+    double maxF = 1e-6;
+    for (var i = 0; i < temp.length; i++) {
+      if (temp[i] > maxT) maxT = temp[i];
+      if (fuel[i] > maxF) maxF = fuel[i];
+    }
+    final invT = 1.0 / maxT;
+    final invF = 1.0 / maxF;
+    for (var i = 0; i < temp.length; i++) {
+      temp[i] = (temp[i] * invT).clamp(0.0, 1.0);
+      fuel[i] = (fuel[i] * invF).clamp(0.0, 1.0);
+    }
+  }
+
+  void _clampField(Float32List f, double min, double max) {
+    for (var i = 0; i < f.length; i++) {
+      if (f[i] < min) {
+        f[i] = min;
+      } else if (f[i] > max) {
+        f[i] = max;
+      }
+    }
   }
 }

@@ -1,7 +1,10 @@
 part of '../_index.dart';
 
-class PulsateStrategy extends FieldStrategy {
+class PulsateStrategy extends StandardFieldStrategy {
   const PulsateStrategy();
+
+  @override
+  String get id => 'pulsate';
 
   @override
   TemporalParams buildTemporalParams(FieldConfig config, double t) {

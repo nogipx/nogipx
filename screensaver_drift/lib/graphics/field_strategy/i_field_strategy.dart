@@ -1,38 +1,28 @@
 part of '../_index.dart';
 
-/// Стратегия расчёта полей: позволяет держать разные режимы (дрейф/пульсация/огонь)
-/// отдельно от конфигурации сетки и шумов.
+/// Базовый тип состояния стратегии (может быть любым).
+abstract class FieldStrategyState {
+  const FieldStrategyState();
+}
+
+/// Стратегия расчёта полей: сервер знает только про этот интерфейс.
 abstract class FieldStrategy {
   const FieldStrategy();
 
-  TemporalParams buildTemporalParams(FieldConfig config, double t);
+  /// Уникальный идентификатор стратегии (совпадает со значением strategy в запросе).
+  String get id;
 
-  ({double px, double py}) warp(
-    int x,
-    int y,
-    FieldConfig config,
-    double t,
-    TemporalParams params,
-  );
+  /// Создаёт внутреннее состояние под конкретный запрос (размеры, буферы и т.д.).
+  FieldStrategyState createState(FieldConfig config);
 
-  double stream(
-    FieldConfig config,
-    int x,
-    int y,
-    double t,
-    double px,
-    double py,
-    TemporalParams params,
-  );
-
-  ({double rhoSrc, double bulgeSrc}) sources(
-    FieldConfig config,
-    double px,
-    double py,
-    TemporalParams params,
-    int x,
-    int y,
-  );
+  /// Генерирует один кадр.
+  FieldFrame generateFrame({
+    required FieldConfig config,
+    required FieldStrategyState state,
+    required double t,
+    required double dt,
+    required BufferTransferMode transferMode,
+  });
 }
 
 final Map<String, FieldStrategy> _strategyRegistry = {
@@ -43,6 +33,9 @@ final Map<String, FieldStrategy> _strategyRegistry = {
 
 FieldStrategy _strategyForId(String id) =>
     _strategyRegistry[id.toLowerCase()] ?? const DriftStrategy();
+
+/// Публичный доступ к стратегиям по идентификатору.
+FieldStrategy strategyForId(String id) => _strategyForId(id);
 
 ({double px, double py}) _warpCommon(
   int x,

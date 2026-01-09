@@ -1,26 +1,101 @@
 part of '../_index.dart';
 
-/// Заполняет поля скорости, высоты и дополнительных каналов для одного кадра.
-///
-/// [config] задает геометрию, шумовые и скоростные параметры. [t] — текущее
-/// время, [dt] — шаг кадра. Пишет результаты в [psiOut], [flowX], [flowY],
-/// [hOut], а временные данные в [rho]/[rhoTmp]/[bulge]/[bulgeTmp]. Используйте
-/// в стрим-петле: функция делит расчеты на этапы (время, warp, источники,
-/// адвекция), чтобы упростить чтение и тестирование.
-void fillFields(
+/// Стандартное состояние для стратегий, работающих с flow/height/bulge.
+class StandardFieldState extends FieldStrategyState {
+  StandardFieldState(int n)
+      : psi = Float32List(n),
+        flowX = Float32List(n),
+        flowY = Float32List(n),
+        rho = Float32List(n),
+        rhoTmp = Float32List(n),
+        height = Float32List(n),
+        bulge = Float32List(n),
+        bulgeTmp = Float32List(n);
+
+  final Float32List psi;
+  final Float32List flowX;
+  final Float32List flowY;
+  final Float32List rho;
+  final Float32List rhoTmp;
+  final Float32List height;
+  final Float32List bulge;
+  final Float32List bulgeTmp;
+}
+
+/// Базовая стратегия для “стандартных” полей: работает с flow/height/bulge.
+abstract class StandardFieldStrategy extends FieldStrategy {
+  const StandardFieldStrategy();
+
+  @override
+  FieldStrategyState createState(FieldConfig config) =>
+      StandardFieldState(config.w * config.h);
+
+  TemporalParams buildTemporalParams(FieldConfig config, double t);
+  ({double px, double py}) warp(
+    int x,
+    int y,
+    FieldConfig config,
+    double t,
+    TemporalParams params,
+  );
+  double stream(
+    FieldConfig config,
+    int x,
+    int y,
+    double t,
+    double px,
+    double py,
+    TemporalParams params,
+  );
+  ({double rhoSrc, double bulgeSrc}) sources(
+    FieldConfig config,
+    double px,
+    double py,
+    TemporalParams params,
+    int x,
+    int y,
+  );
+
+  @override
+  FieldFrame generateFrame({
+    required FieldConfig config,
+    required FieldStrategyState state,
+    required double t,
+    required double dt,
+    required BufferTransferMode transferMode,
+  }) {
+    final s = state as StandardFieldState;
+    _simulateStandard(
+      config,
+      t,
+      dt,
+      s,
+      this,
+    );
+
+    return buildFieldFrame(
+      transferMode,
+      config.w,
+      config.h,
+      t,
+      kind: 'standard',
+      channels: {
+        'flowX': s.flowX,
+        'flowY': s.flowY,
+        'height': s.height,
+        'bulge': s.bulge,
+      },
+    );
+  }
+}
+
+void _simulateStandard(
   FieldConfig config,
   double t,
   double dt,
-  Float32List psiOut,
-  Float32List flowX,
-  Float32List flowY,
-  Float32List rho,
-  Float32List rhoTmp,
-  Float32List hOut,
-  Float32List bulge,
-  Float32List bulgeTmp,
+  StandardFieldState state,
+  StandardFieldStrategy strategy,
 ) {
-  final strategy = _strategyForId(config.strategy);
   final params = strategy.buildTemporalParams(config, t);
   final tuning = config.tuning;
 
@@ -35,7 +110,7 @@ void fillFields(
       final i = y * w + x;
 
       final warped = strategy.warp(x, y, config, t, params);
-      psiOut[i] = strategy.stream(
+      state.psi[i] = strategy.stream(
         config,
         x,
         y,
@@ -44,7 +119,7 @@ void fillFields(
         warped.py,
         params,
       );
-      final sources = strategy.sources(
+      final src = strategy.sources(
         config,
         warped.px,
         warped.py,
@@ -52,61 +127,48 @@ void fillFields(
         x,
         y,
       );
-      sourceSum += sources.rhoSrc;
-      bulgeSrcSum += sources.bulgeSrc;
-      rhoTmp[i] = sources.rhoSrc;
-      bulgeTmp[i] = sources.bulgeSrc;
+      sourceSum += src.rhoSrc;
+      bulgeSrcSum += src.bulgeSrc;
+      state.rhoTmp[i] = src.rhoSrc;
+      state.bulgeTmp[i] = src.bulgeSrc;
     }
   }
 
-  normalizeZeroMean(rhoTmp, sourceSum, n);
-  normalizeZeroMean(bulgeTmp, bulgeSrcSum, n);
+  _normalizeZeroMean(state.rhoTmp, sourceSum, n);
+  _normalizeZeroMean(state.bulgeTmp, bulgeSrcSum, n);
 
-  // Вычисляем divergence-free поток из psi (даже в пульсациях для наклона)
-  psiToDivergenceFreeFlow(w, h, psiOut, flowX, flowY, tuning);
+  _psiToDivergenceFreeFlow(w, h, state.psi, state.flowX, state.flowY, tuning);
 
-  advectAndDissipate(
+  _advectAndDissipate(
     w,
     h,
     dt,
-    flowX,
-    flowY,
-    rho,
-    rhoTmp,
-    bulge,
-    bulgeTmp,
+    state.flowX,
+    state.flowY,
+    state.rho,
+    state.rhoTmp,
+    state.bulge,
+    state.bulgeTmp,
     tuning.advection,
   );
-  finalizeHeightAndBulge(
-    rho,
-    rhoTmp,
-    hOut,
-    bulge,
-    bulgeTmp,
+  _finalizeHeightAndBulge(
+    state.rho,
+    state.rhoTmp,
+    state.height,
+    state.bulge,
+    state.bulgeTmp,
     tuning.heightPower,
   );
 }
 
-/// Делает источники нулевой средней для устойчивого дыхания/пузырей.
-///
-/// [buffer] — временный массив; [sum] — предварительно накопленная сумма;
-/// [count] — количество элементов (обычно w*h). Используйте для любого
-/// временного буфера, где сумма должна быть нулевой.
-void normalizeZeroMean(Float32List buffer, double sum, int count) {
+void _normalizeZeroMean(Float32List buffer, double sum, int count) {
   final mean = sum / count;
   for (var i = 0; i < buffer.length; i++) {
     buffer[i] -= mean;
   }
 }
 
-/// Выполняет backtrace-адвекцию и затухание для плотности и bulge.
-///
-/// [w]/[h] — размер сетки, [dt] — шаг времени. [flowX]/[flowY] — поле скорости,
-/// [rho]/[rhoTmp] и [bulge]/[bulgeTmp] — двойные буферы для плотности и
-/// пузырьков. Вызывайте после вычисления flowX/flowY и заполнения источников;
-/// функция аккуратно клампит координаты, чтобы избежать выбросов. [tuning]
-/// задает коэффициенты затухания, примесей и фоновых значений.
-void advectAndDissipate(
+void _advectAndDissipate(
   int w,
   int h,
   double dt,
@@ -167,13 +229,7 @@ void advectAndDissipate(
   }
 }
 
-/// Финализирует каналы: копирует плотность, строит высоту и обновляет bulge.
-///
-/// [rhoTmp] копируется в [rho], [hOut] заполняется степенью плотности,
-/// [bulge] обновляется из [bulgeTmp]. [heightPower] управляет степенью
-/// преобразования высоты. Вызывайте после `advectAndDissipate`, чтобы
-/// подготовить данные к упаковке.
-void finalizeHeightAndBulge(
+void _finalizeHeightAndBulge(
   Float32List rho,
   Float32List rhoTmp,
   Float32List hOut,
@@ -188,12 +244,7 @@ void finalizeHeightAndBulge(
   }
 }
 
-/// Переводит функцию тока в бездивергентное поле скорости.
-///
-/// [w]/[h] — размер сетки, [psi] — функция тока, [flowX]/[flowY] — выход.
-/// Используйте для генерации стабильного поля flowX/flowY перед адвекцией.
-/// [tuning] управляет усилением и клампом скорости.
-void psiToDivergenceFreeFlow(
+void _psiToDivergenceFreeFlow(
   int w,
   int h,
   Float32List psi,
@@ -204,8 +255,8 @@ void psiToDivergenceFreeFlow(
   int ix(int x) => x.clamp(0, w - 1);
   int iy(int y) => y.clamp(0, h - 1);
 
-  final flowAmp = tuning.flowAmp; // ещё живее
-  final flowClamp = tuning.flowClamp; // защита от выбросов
+  final flowAmp = tuning.flowAmp;
+  final flowClamp = tuning.flowClamp;
 
   for (var y = 0; y < h; y++) {
     final ym = iy(y - 1);

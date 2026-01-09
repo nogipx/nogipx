@@ -1,7 +1,10 @@
 part of '../_index.dart';
 
-class DriftStrategy extends FieldStrategy {
+class DriftStrategy extends StandardFieldStrategy {
   const DriftStrategy();
+
+  @override
+  String get id => 'drift';
 
   @override
   TemporalParams buildTemporalParams(FieldConfig config, double t) {

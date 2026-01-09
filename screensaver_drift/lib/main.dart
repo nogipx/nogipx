@@ -8,8 +8,6 @@ import 'package:screensaver_drift/worker.dart';
 import 'dto.dart';
 import 'model.dart';
 
-enum VisualMode { fire, drift }
-
 void main() async {
   final client = await DriftWorkerClient.spawn();
   runApp(MyApp(worker: client));
@@ -28,7 +26,7 @@ class _MyAppState extends State<MyApp> {
   late final ValueNotifier<DriftFrameData> _lastFrame;
   late final ValueNotifier<double> _fps;
   StreamSubscription? _sub;
-  late VisualMode _mode;
+  late StrategyUIOption _strategy;
   late DriftFieldRequest _request;
   late PainterSettings _painterSettings;
   final _rng = Random();
@@ -39,55 +37,28 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     _lastFrame = ValueNotifier(DriftFrameData.empty());
     _fps = ValueNotifier(0);
-    _mode = VisualMode.fire;
-    _request = _buildRequestForMode(_mode);
-    _painterSettings = _buildPainterSettingsForMode(_mode);
+    _strategy = kStrategies.first;
+    _request = _strategy.buildRequest(_rng);
+    _painterSettings = _strategy.buildPainter(_rng);
     super.initState();
-  }
-
-  DriftFieldRequest _buildRequestForMode(VisualMode mode) {
-    switch (mode) {
-      case VisualMode.fire:
-        return DriftFieldRequest.fire(_rng);
-      case VisualMode.drift:
-        return DriftFieldRequest.randomWeb(_rng);
-    }
-  }
-
-  PainterSettings _buildPainterSettingsForMode(VisualMode mode) {
-    switch (mode) {
-      case VisualMode.fire:
-        return PainterSettings.fire(_rng);
-      case VisualMode.drift:
-        return PainterSettings.randomWeb(_rng);
-    }
   }
 
   void _randomizeCurrent() {
     setState(() {
-      _request = _buildRequestForMode(_mode);
-      _painterSettings = _buildPainterSettingsForMode(_mode);
+      _request = _strategy.buildRequest(_rng);
+      _painterSettings = _strategy.buildPainter(_rng);
       _startStream();
     });
   }
 
-  void _setMode(VisualMode mode) {
-    if (mode == _mode) return;
+  void _setStrategy(StrategyUIOption option) {
+    if (option == _strategy) return;
     setState(() {
-      _mode = mode;
-      _request = _buildRequestForMode(mode);
-      _painterSettings = _buildPainterSettingsForMode(mode);
+      _strategy = option;
+      _request = option.buildRequest(_rng);
+      _painterSettings = option.buildPainter(_rng);
       _startStream();
     });
-  }
-
-  String _modeLabel(VisualMode mode) {
-    switch (mode) {
-      case VisualMode.fire:
-        return 'Fire';
-      case VisualMode.drift:
-        return 'Drift';
-    }
   }
 
   void _startStream() {
@@ -130,7 +101,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         floatingActionButton: FloatingActionButton.extended(
-          label: Text('Random ${_modeLabel(_mode)}'),
+          label: Text('Random ${_strategy.label}'),
           icon: const Icon(Icons.shuffle),
           onPressed: _randomizeCurrent,
         ),
@@ -209,14 +180,14 @@ class _MyAppState extends State<MyApp> {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: VisualMode.values.map((mode) {
-                        final selected = mode == _mode;
+                      children: kStrategies.map((option) {
+                        final selected = option == _strategy;
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: ChoiceChip(
-                            label: Text(_modeLabel(mode)),
+                            label: Text(option.label),
                             selected: selected,
-                            onSelected: (_) => _setMode(mode),
+                            onSelected: (_) => _setStrategy(option),
                             labelStyle: TextStyle(
                               color: selected ? Colors.black : Colors.white,
                               fontWeight: FontWeight.w600,
@@ -238,6 +209,42 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
+enum StrategyKind {
+  fire('fire', 'Fire'),
+  drift('drift', 'Drift');
+
+  const StrategyKind(this.id, this.label);
+  final String id;
+  final String label;
+}
+
+class StrategyUIOption {
+  const StrategyUIOption({
+    required this.kind,
+    required this.buildRequest,
+    required this.buildPainter,
+  });
+
+  final StrategyKind kind;
+  String get id => kind.id;
+  String get label => kind.label;
+  final DriftFieldRequest Function(Random rng) buildRequest;
+  final PainterSettings Function(Random rng) buildPainter;
+}
+
+const List<StrategyUIOption> kStrategies = [
+  StrategyUIOption(
+    kind: StrategyKind.fire,
+    buildRequest: DriftFieldRequest.fire,
+    buildPainter: PainterSettings.fire,
+  ),
+  StrategyUIOption(
+    kind: StrategyKind.drift,
+    buildRequest: DriftFieldRequest.randomWeb,
+    buildPainter: PainterSettings.randomWeb,
+  ),
+];
 
 class PainterSettings {
   const PainterSettings({

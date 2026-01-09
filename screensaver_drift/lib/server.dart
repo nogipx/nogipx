@@ -67,23 +67,19 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
     DriftFieldRequest request, {
     RpcContext? context,
   }) async* {
+    final strategy = strategyForId(request.strategy);
     final localStreamKey = const Uuid().v4();
     _framesStreamKey = localStreamKey;
-    final w = request.w;
-    final h = request.h;
-    final n = w * h;
-
-    final psi = Float32List(n);
-    final flowX = Float32List(n);
-    final flowY = Float32List(n);
-    final height = Float32List(n);
-    final rho = Float32List(n); // advected density (“breathing voids”)
-    final rhoTmp = Float32List(n);
-    final bulge = Float32List(n);
-    final bulgeTmp = Float32List(n);
 
     final dt = 1.0 / max(1, request.fps);
     var t = 0.0;
+
+    final config = FieldConfig.fromRequest(
+      request,
+      tuning: randomTuning ? FieldTuning.random(seed: seed) : const FieldTuning(),
+    );
+    final state = strategy.createState(config);
+    final transferMode = _bufferModeFromRpc(dataTransferMode);
 
     while (true) {
       if (context?.cancellationToken?.isCancelled == true) {
@@ -93,37 +89,12 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
         return;
       }
 
-      final tuning = randomTuning
-          ? FieldTuning.random(seed: seed)
-          : FieldTuning();
-      final config = FieldConfig.fromRequest(request, tuning: tuning);
-      final transferMode = _bufferModeFromRpc(dataTransferMode);
-      fillFields(
-        config,
-        t,
-        dt,
-        psi,
-        flowX,
-        flowY,
-        rho,
-        rhoTmp,
-        height,
-        bulge,
-        bulgeTmp,
-      );
-
-      final payload = buildFieldFrame(
-        transferMode,
-        w,
-        h,
-        t,
-        kind: 'standard',
-        channels: {
-          'flowX': flowX,
-          'flowY': flowY,
-          'height': height,
-          'bulge': bulge,
-        },
+      final payload = strategy.generateFrame(
+        config: config,
+        state: state,
+        t: t,
+        dt: dt,
+        transferMode: transferMode,
       );
       yield toDriftFieldFrame(payload);
 
