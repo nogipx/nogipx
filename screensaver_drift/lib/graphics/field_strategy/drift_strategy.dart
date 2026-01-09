@@ -89,12 +89,7 @@ class DriftStrategy extends FieldStrategy {
       h,
       t,
       kind: 'standard',
-      channels: {
-        'flowX': s.flowX,
-        'flowY': s.flowY,
-        'height': s.height,
-        'bulge': s.bulge,
-      },
+      channels: s.channels,
     );
   }
 
@@ -280,7 +275,15 @@ class _DriftState extends FieldStrategyState {
         rhoTmp = Float32List(n),
         height = Float32List(n),
         bulge = Float32List(n),
-        bulgeTmp = Float32List(n);
+        bulgeTmp = Float32List(n),
+        channels = <String, Float32List>{} {
+    channels.addAll({
+      'flowX': flowX,
+      'flowY': flowY,
+      'height': height,
+      'bulge': bulge,
+    });
+  }
 
   final Float32List psi;
   final Float32List flowX;
@@ -290,6 +293,7 @@ class _DriftState extends FieldStrategyState {
   final Float32List height;
   final Float32List bulge;
   final Float32List bulgeTmp;
+  final Map<String, Float32List> channels;
 }
 
 void _normalizeZeroMean(Float32List buffer, double sum, int count) {
@@ -314,20 +318,26 @@ void _advectAndDissipate(
   final dissipation = tuning.dissipation;
   final invW = 1.0 / math.max(1, w - 1);
   final invH = 1.0 / math.max(1, h - 1);
+  final maxX = w - 1.0;
+  final maxY = h - 1.0;
   for (var y = 0; y < h; y++) {
     for (var x = 0; x < w; x++) {
       final i = y * w + x;
       final vx = flowX[i];
       final vy = flowY[i];
 
-      double clampCoord(double v, double max) {
-        if (v < 0) return 0;
-        if (v > max - 1) return max - 1;
-        return v;
+      var backX = x.toDouble() - vx * dt * w;
+      if (backX < 0) {
+        backX = 0;
+      } else if (backX > maxX) {
+        backX = maxX;
       }
-
-      final backX = clampCoord(x.toDouble() - vx * dt * w, w.toDouble());
-      final backY = clampCoord(y.toDouble() - vy * dt * h, h.toDouble());
+      var backY = y.toDouble() - vy * dt * h;
+      if (backY < 0) {
+        backY = 0;
+      } else if (backY > maxY) {
+        backY = maxY;
+      }
       final adv = sampleBilinearClamp(
         rho,
         w,

@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Screensaver Release Chrome Wasm" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="additionalArgs" value="-d chrome --release --wasm --web-header=Cross-Origin-Opener-Policy=same-origin --web-header=Cross-Origin-Embedder-Policy=require-corp" />
+    <option name="filePath" value="$PROJECT_DIR$/screensaver_drift/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>

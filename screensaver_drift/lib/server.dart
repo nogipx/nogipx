@@ -72,6 +72,7 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
     _framesStreamKey = localStreamKey;
 
     final dt = 1.0 / max(1, request.fps);
+    final frameDelay = Duration(microseconds: (dt * 1e6).round());
     var t = 0.0;
 
     final config = FieldConfig.fromRequest(
@@ -99,7 +100,7 @@ final class ScreensaverCompute extends ScreensaverComputeResponder {
       yield toDriftFieldFrame(payload);
 
       t += dt;
-      await Future<void>.delayed(Duration(microseconds: (dt * 1e6).round()));
+      await Future<void>.delayed(frameDelay);
     }
   }
 }

@@ -26,12 +26,13 @@ class _MyAppState extends State<MyApp> {
   late final ValueNotifier<DriftFrameData> _lastFrame;
   late final ValueNotifier<double> _fps;
   StreamSubscription? _sub;
+  final FrameRecycler _recycler = FrameRecycler();
   late StrategyUIOption _strategy;
   late DriftFieldRequest _request;
   late PainterSettings _painterSettings;
   Size? _deviceSize;
   double _hairDensity = 1.0;
-  double _fieldScale = 0.7;
+  double _fieldScale = 0.6;
   final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
   final _rng = Random();
   final _fpsWatch = Stopwatch();
@@ -134,6 +135,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _startStream() {
+    widget.worker.cancelStream();
     _sub?.cancel();
     _fpsFrames = 0;
     _fpsWatch
@@ -141,7 +143,7 @@ class _MyAppState extends State<MyApp> {
       ..start();
     _stream = widget.worker.stream(_request);
     _sub = _stream.listen((frame) {
-      _lastFrame.value = DriftFrameData.fromRawFrame(frame);
+      _lastFrame.value = _recycler.materialize(frame);
       _fpsFrames++;
       final elapsedMs = _fpsWatch.elapsedMilliseconds;
       if (elapsedMs >= 500) {
@@ -166,8 +168,10 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _sub?.cancel();
+    widget.worker.cancelStream();
     widget.worker.dispose();
     _fps.dispose();
+    _lastFrame.dispose();
     super.dispose();
   }
 

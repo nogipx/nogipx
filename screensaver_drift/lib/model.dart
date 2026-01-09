@@ -52,3 +52,31 @@ class DriftFrameData with EquatableMixin {
 
   Float32List? channel(String name) => channels[name];
 }
+
+/// Ресайклер для materialize без постоянных выделений: копирует входные каналы
+/// во внутренние буферы, переиспользуя их между кадрами.
+class FrameRecycler {
+  final Map<String, Float32List> _buffers = {};
+
+  DriftFrameData materialize(DriftFieldFrame frame) {
+    final channels = <String, Float32List>{};
+    frame.channels.forEach((key, value) {
+      final src = DriftWorkerClient.materializeF32(value);
+      final len = src.length;
+      final existing = _buffers[key];
+      final dst = (existing != null && existing.length == len)
+          ? existing
+          : (_buffers[key] = Float32List(len));
+      dst.setAll(0, src);
+      channels[key] = dst;
+    });
+    return DriftFrameData(
+      w: frame.w,
+      h: frame.h,
+      t: frame.t,
+      kind: frame.kind,
+      channels: channels,
+      meta: frame.meta,
+    );
+  }
+}

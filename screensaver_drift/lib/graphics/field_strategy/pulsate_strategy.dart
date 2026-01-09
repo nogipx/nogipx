@@ -74,12 +74,7 @@ class PulsateStrategy extends FieldStrategy {
       h,
       t,
       kind: 'standard',
-      channels: {
-        'flowX': s.flowX,
-        'flowY': s.flowY,
-        'height': s.height,
-        'bulge': s.bulge,
-      },
+      channels: s.channels,
     );
   }
 
@@ -245,7 +240,15 @@ class _PulsateState extends FieldStrategyState {
       rhoTmp = Float32List(n),
       height = Float32List(n),
       bulge = Float32List(n),
-      bulgeTmp = Float32List(n);
+      bulgeTmp = Float32List(n),
+      channels = <String, Float32List>{} {
+    channels.addAll({
+      'flowX': flowX,
+      'flowY': flowY,
+      'height': height,
+      'bulge': bulge,
+    });
+  }
 
   final Float32List psi;
   final Float32List flowX;
@@ -255,4 +258,5 @@ class _PulsateState extends FieldStrategyState {
   final Float32List height;
   final Float32List bulge;
   final Float32List bulgeTmp;
+  final Map<String, Float32List> channels;
 }

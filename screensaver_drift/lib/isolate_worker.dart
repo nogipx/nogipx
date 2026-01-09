@@ -4,13 +4,12 @@ import 'package:rpc_dart/rpc_dart.dart';
 import 'package:rpc_dart_transports/rpc_dart_transports.dart';
 import 'package:screensaver_drift/server.dart';
 
-@pragma('vm:entry-point')
 @isolateManagerCustomWorker
 FutureOr<void> rpcIsolateWorker(dynamic _) async {
-  runRpcIsolateManagerWorker(driftWorkerEntrypoint);
+  runRpcIsolateManagerWorker(isolateEntrypoint);
 }
 
-void driftWorkerEntrypoint(
+void isolateEntrypoint(
   IRpcTransport transport,
   Map<String, dynamic> customParams,
 ) {

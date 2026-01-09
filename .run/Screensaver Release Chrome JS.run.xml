@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Screensaver Release Chrome JS" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="additionalArgs" value="-d chrome --release" />
+    <option name="filePath" value="$PROJECT_DIR$/screensaver_drift/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>

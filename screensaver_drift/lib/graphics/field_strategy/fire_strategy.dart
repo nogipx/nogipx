@@ -9,7 +9,15 @@ class FireFieldState extends FieldStrategyState {
       temp = Float32List(n),
       tempTmp = Float32List(n),
       fuel = Float32List(n),
-      fuelTmp = Float32List(n);
+      fuelTmp = Float32List(n),
+      channels = <String, Float32List>{} {
+    channels.addAll({
+      'flowX': vx,
+      'flowY': vy,
+      'height': temp,
+      'bulge': fuel,
+    });
+  }
 
   final int w;
   final int h;
@@ -21,6 +29,7 @@ class FireFieldState extends FieldStrategyState {
   final Float32List tempTmp;
   final Float32List fuel;
   final Float32List fuelTmp;
+  final Map<String, Float32List> channels;
 }
 
 class FireStrategy extends FieldStrategy {
@@ -108,15 +117,12 @@ class FireStrategy extends FieldStrategy {
       s.h,
       t,
       kind: 'standard',
-      channels: {
-        'flowX': s.vx,
-        'flowY': s.vy,
-        'height': s.temp,
-        'bulge': s.fuel,
-      },
-      meta: {'kind': 'fire'},
+      channels: s.channels,
+      meta: _fireMeta,
     );
   }
+
+  static const Map<String, String> _fireMeta = {'kind': 'fire'};
 
   void _injectFuelAndHeat(
     FireFieldState s,
@@ -154,14 +160,26 @@ class FireStrategy extends FieldStrategy {
     final h = s.h;
     final invW = 1.0 / math.max(1, w - 1);
     final invH = 1.0 / math.max(1, h - 1);
+    final maxX = w - 1.0;
+    final maxY = h - 1.0;
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
         final i = y * w + x;
         final vx = s.vx[i];
         final vy = s.vy[i];
 
-        final backX = (x.toDouble() - vx * dt * w).clamp(0.0, w - 1.0);
-        final backY = (y.toDouble() - vy * dt * h).clamp(0.0, h - 1.0);
+        var backX = x.toDouble() - vx * dt * w;
+        if (backX < 0) {
+          backX = 0;
+        } else if (backX > maxX) {
+          backX = maxX;
+        }
+        var backY = y.toDouble() - vy * dt * h;
+        if (backY < 0) {
+          backY = 0;
+        } else if (backY > maxY) {
+          backY = maxY;
+        }
         final u = backX * invW;
         final v = backY * invH;
 
@@ -183,14 +201,26 @@ class FireStrategy extends FieldStrategy {
     final h = s.h;
     final invW = 1.0 / math.max(1, w - 1);
     final invH = 1.0 / math.max(1, h - 1);
+    final maxX = w - 1.0;
+    final maxY = h - 1.0;
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
         final i = y * w + x;
         final vx = s.vx[i];
         final vy = s.vy[i];
 
-        final backX = (x.toDouble() - vx * dt * w).clamp(0.0, w - 1.0);
-        final backY = (y.toDouble() - vy * dt * h).clamp(0.0, h - 1.0);
+        var backX = x.toDouble() - vx * dt * w;
+        if (backX < 0) {
+          backX = 0;
+        } else if (backX > maxX) {
+          backX = maxX;
+        }
+        var backY = y.toDouble() - vy * dt * h;
+        if (backY < 0) {
+          backY = 0;
+        } else if (backY > maxY) {
+          backY = maxY;
+        }
         final u = backX * invW;
         final v = backY * invH;
 
