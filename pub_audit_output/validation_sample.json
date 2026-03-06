@@ -1,502 +1,502 @@
 [
   {
-    "package_name": "monarch_channels",
-    "api_downloads_30d": 3,
-    "page_downloads_display": "3"
-  },
-  {
-    "package_name": "liquidglass_container",
-    "api_downloads_30d": 209,
-    "page_downloads_display": "209"
-  },
-  {
-    "package_name": "googlemaps_flutter_webservices",
-    "api_downloads_30d": 717,
-    "page_downloads_display": "717"
-  },
-  {
-    "package_name": "omi_sdk",
-    "api_downloads_30d": 48,
-    "page_downloads_display": "48"
-  },
-  {
-    "package_name": "flutter_weigets_plus",
-    "api_downloads_30d": 19,
-    "page_downloads_display": "19"
-  },
-  {
-    "package_name": "android_notification_listener",
-    "api_downloads_30d": 57,
-    "page_downloads_display": "57"
-  },
-  {
-    "package_name": "flutter_rating_bar_pulse",
+    "package_name": "schedule_controller",
     "api_downloads_30d": 28,
     "page_downloads_display": "28"
   },
   {
-    "package_name": "sniffurl_flutter",
-    "api_downloads_30d": 8,
-    "page_downloads_display": "8"
+    "package_name": "status_change",
+    "api_downloads_30d": 236,
+    "page_downloads_display": "236"
   },
   {
-    "package_name": "flyer_chat_text_message",
-    "api_downloads_30d": 4666,
-    "page_downloads_display": "4.67k"
+    "package_name": "device_orientation_detector",
+    "api_downloads_30d": 87,
+    "page_downloads_display": "87"
   },
   {
-    "package_name": "custom_dropdown_2",
-    "api_downloads_30d": 27,
-    "page_downloads_display": "27"
+    "package_name": "prompter_mh",
+    "api_downloads_30d": 37,
+    "page_downloads_display": "37"
   },
   {
-    "package_name": "tovi",
-    "api_downloads_30d": 0,
-    "page_downloads_display": "0"
+    "package_name": "flutter_datetime_picker",
+    "api_downloads_30d": 8758,
+    "page_downloads_display": "8.76k"
   },
   {
-    "package_name": "minth",
-    "api_downloads_30d": 14,
-    "page_downloads_display": "14"
+    "package_name": "smartech_push",
+    "api_downloads_30d": 549,
+    "page_downloads_display": "549"
   },
   {
-    "package_name": "openai_flutter",
-    "api_downloads_30d": 9,
-    "page_downloads_display": "9"
+    "package_name": "sweete_buttons",
+    "api_downloads_30d": 5,
+    "page_downloads_display": "5"
   },
   {
-    "package_name": "webview_cef",
-    "api_downloads_30d": 314,
-    "page_downloads_display": "314"
-  },
-  {
-    "package_name": "http_mock",
-    "api_downloads_30d": 17,
-    "page_downloads_display": "17"
-  },
-  {
-    "package_name": "enhanced_avatar_view",
-    "api_downloads_30d": 169,
-    "page_downloads_display": "169"
-  },
-  {
-    "package_name": "form_validation_utils",
-    "api_downloads_30d": 33,
-    "page_downloads_display": "33"
-  },
-  {
-    "package_name": "simple_dart_select_field",
-    "api_downloads_30d": 18,
-    "page_downloads_display": "18"
-  },
-  {
-    "package_name": "ripple_navigation",
-    "api_downloads_30d": 32,
-    "page_downloads_display": "32"
-  },
-  {
-    "package_name": "image_field",
-    "api_downloads_30d": 646,
-    "page_downloads_display": "646"
-  },
-  {
-    "package_name": "ray_temp_blue",
-    "api_downloads_30d": 3,
-    "page_downloads_display": "3"
-  },
-  {
-    "package_name": "oxean_calendar_view",
-    "api_downloads_30d": 45,
-    "page_downloads_display": "45"
-  },
-  {
-    "package_name": "highchartjs",
-    "api_downloads_30d": 34,
-    "page_downloads_display": "34"
-  },
-  {
-    "package_name": "guard",
-    "api_downloads_30d": 16,
-    "page_downloads_display": "16"
-  },
-  {
-    "package_name": "pos_getnet_comsis",
-    "api_downloads_30d": 3,
-    "page_downloads_display": "3"
-  },
-  {
-    "package_name": "simple_logging",
-    "api_downloads_30d": 8,
-    "page_downloads_display": "8"
-  },
-  {
-    "package_name": "landscape_textfield",
-    "api_downloads_30d": 34,
-    "page_downloads_display": "34"
-  },
-  {
-    "package_name": "test_app_345",
-    "api_downloads_30d": 0,
-    "page_downloads_display": "0"
-  },
-  {
-    "package_name": "katex",
-    "api_downloads_30d": 19,
-    "page_downloads_display": "19"
-  },
-  {
-    "package_name": "flutter_common_extensions_flutterfly",
-    "api_downloads_30d": 32,
-    "page_downloads_display": "32"
-  },
-  {
-    "package_name": "qr_code_tools",
-    "api_downloads_30d": 6013,
-    "page_downloads_display": "6.01k"
-  },
-  {
-    "package_name": "llmifier",
-    "api_downloads_30d": 274,
-    "page_downloads_display": "274"
-  },
-  {
-    "package_name": "vn_badwords_filter",
-    "api_downloads_30d": 19,
-    "page_downloads_display": "19"
-  },
-  {
-    "package_name": "release_tools",
-    "api_downloads_30d": 830,
-    "page_downloads_display": "830"
-  },
-  {
-    "package_name": "floaty_head",
-    "api_downloads_30d": 40,
-    "page_downloads_display": "40"
-  },
-  {
-    "package_name": "cqrs_mediator",
-    "api_downloads_30d": 110,
-    "page_downloads_display": "110"
-  },
-  {
-    "package_name": "page_effect_jh",
-    "api_downloads_30d": 9,
-    "page_downloads_display": "9"
-  },
-  {
-    "package_name": "json_http_client",
-    "api_downloads_30d": 25,
-    "page_downloads_display": "25"
-  },
-  {
-    "package_name": "scrollviewer",
-    "api_downloads_30d": 3,
-    "page_downloads_display": "3"
-  },
-  {
-    "package_name": "tiny_ai",
-    "api_downloads_30d": 55,
-    "page_downloads_display": "55"
-  },
-  {
-    "package_name": "custom_card_t1",
-    "api_downloads_30d": 20,
-    "page_downloads_display": "20"
-  },
-  {
-    "package_name": "kavendar",
-    "api_downloads_30d": 35,
-    "page_downloads_display": "35"
-  },
-  {
-    "package_name": "eagle_http",
+    "package_name": "widget_slider",
     "api_downloads_30d": 39,
     "page_downloads_display": "39"
   },
   {
-    "package_name": "flutter_exposure",
-    "api_downloads_30d": 38,
-    "page_downloads_display": "38"
-  },
-  {
-    "package_name": "autocompeletetxtfield",
-    "api_downloads_30d": 71,
-    "page_downloads_display": "71"
-  },
-  {
-    "package_name": "animated_switcher",
-    "api_downloads_30d": 81,
-    "page_downloads_display": "81"
-  },
-  {
-    "package_name": "jaguar_sqljocky",
-    "api_downloads_30d": 34,
-    "page_downloads_display": "34"
-  },
-  {
-    "package_name": "draw_on_path",
-    "api_downloads_30d": 888,
-    "page_downloads_display": "888"
-  },
-  {
-    "package_name": "numd",
-    "api_downloads_30d": 36,
-    "page_downloads_display": "36"
-  },
-  {
-    "package_name": "custom_date_picker_plus_pro",
-    "api_downloads_30d": 41,
-    "page_downloads_display": "41"
-  },
-  {
-    "package_name": "discord_logger",
-    "api_downloads_30d": 49,
-    "page_downloads_display": "49"
-  },
-  {
-    "package_name": "firebase_notify_kit",
-    "api_downloads_30d": 103,
-    "page_downloads_display": "103"
-  },
-  {
-    "package_name": "syrian_dio",
-    "api_downloads_30d": 157,
-    "page_downloads_display": "157"
-  },
-  {
-    "package_name": "prompter_vjg",
-    "api_downloads_30d": 8,
-    "page_downloads_display": "8"
-  },
-  {
-    "package_name": "libserialport",
-    "api_downloads_30d": 42,
-    "page_downloads_display": "42"
-  },
-  {
-    "package_name": "clickable_list_wheel_view",
-    "api_downloads_30d": 870,
-    "page_downloads_display": "870"
-  },
-  {
-    "package_name": "flutter_drag_selector",
-    "api_downloads_30d": 51,
-    "page_downloads_display": "51"
-  },
-  {
-    "package_name": "network_state_handler",
+    "package_name": "dart_frog_header_auth",
     "api_downloads_30d": 19,
     "page_downloads_display": "19"
   },
   {
-    "package_name": "flippy",
-    "api_downloads_30d": 47,
-    "page_downloads_display": "47"
+    "package_name": "luscii_patient_actions_sdk_ios",
+    "api_downloads_30d": 1,
+    "page_downloads_display": "1"
   },
   {
-    "package_name": "ecocash",
-    "api_downloads_30d": 22,
-    "page_downloads_display": "22"
+    "package_name": "schmucklicloud_auth",
+    "api_downloads_30d": 39,
+    "page_downloads_display": "39"
   },
   {
-    "package_name": "push2gorouter",
-    "api_downloads_30d": 29,
-    "page_downloads_display": "29"
+    "package_name": "animation_button",
+    "api_downloads_30d": 32,
+    "page_downloads_display": "32"
   },
   {
-    "package_name": "dart_service_announcement",
-    "api_downloads_30d": 3367,
-    "page_downloads_display": "3.37k"
+    "package_name": "flutter_ble",
+    "api_downloads_30d": 39,
+    "page_downloads_display": "39"
   },
   {
-    "package_name": "aws_ai",
-    "api_downloads_30d": 29,
-    "page_downloads_display": "29"
+    "package_name": "logger_flutter_console",
+    "api_downloads_30d": 0,
+    "page_downloads_display": "0"
   },
   {
-    "package_name": "upi_connect",
-    "api_downloads_30d": 9,
-    "page_downloads_display": "9"
+    "package_name": "notix",
+    "api_downloads_30d": 97,
+    "page_downloads_display": "97"
   },
   {
-    "package_name": "firebase_ui_localizations",
-    "api_downloads_30d": 48082,
-    "page_downloads_display": "48.1k"
-  },
-  {
-    "package_name": "whatsapp_launcher",
-    "api_downloads_30d": 36,
-    "page_downloads_display": "36"
-  },
-  {
-    "package_name": "app_wrapper",
-    "api_downloads_30d": 171,
-    "page_downloads_display": "171"
-  },
-  {
-    "package_name": "white",
-    "api_downloads_30d": 199,
-    "page_downloads_display": "199"
-  },
-  {
-    "package_name": "common_listview",
-    "api_downloads_30d": 22,
-    "page_downloads_display": "22"
-  },
-  {
-    "package_name": "facebook_wrapper",
-    "api_downloads_30d": 44,
-    "page_downloads_display": "44"
-  },
-  {
-    "package_name": "adaptive_form",
-    "api_downloads_30d": 107,
-    "page_downloads_display": "107"
-  },
-  {
-    "package_name": "underline",
-    "api_downloads_30d": 23,
-    "page_downloads_display": "23"
-  },
-  {
-    "package_name": "dartness",
-    "api_downloads_30d": 99,
-    "page_downloads_display": "99"
-  },
-  {
-    "package_name": "easy_camera",
-    "api_downloads_30d": 25,
-    "page_downloads_display": "25"
-  },
-  {
-    "package_name": "native_vibration",
-    "api_downloads_30d": 321,
-    "page_downloads_display": "321"
-  },
-  {
-    "package_name": "phone_text_form_field",
-    "api_downloads_30d": 34,
-    "page_downloads_display": "34"
-  },
-  {
-    "package_name": "gh_trend",
-    "api_downloads_30d": 46,
-    "page_downloads_display": "46"
-  },
-  {
-    "package_name": "pdf_text_extraction",
-    "api_downloads_30d": 169,
-    "page_downloads_display": "169"
-  },
-  {
-    "package_name": "serverpod_auth_sms_core_server",
-    "api_downloads_30d": 271,
-    "page_downloads_display": "271"
-  },
-  {
-    "package_name": "drag_and_drop",
-    "api_downloads_30d": 30,
-    "page_downloads_display": "30"
-  },
-  {
-    "package_name": "deept_client",
-    "api_downloads_30d": 50,
-    "page_downloads_display": "50"
-  },
-  {
-    "package_name": "clean_architecture_linter",
-    "api_downloads_30d": 302,
-    "page_downloads_display": "302"
-  },
-  {
-    "package_name": "secugen_plugin",
-    "api_downloads_30d": 101,
-    "page_downloads_display": "101"
-  },
-  {
-    "package_name": "flutter_adaptive_ui",
-    "api_downloads_30d": 100,
-    "page_downloads_display": "100"
-  },
-  {
-    "package_name": "fancy_textfield",
-    "api_downloads_30d": 20,
-    "page_downloads_display": "20"
-  },
-  {
-    "package_name": "flutter_any_download",
-    "api_downloads_30d": 561,
-    "page_downloads_display": "561"
-  },
-  {
-    "package_name": "ds_easy_db_secured_shared_preferences",
-    "api_downloads_30d": 164,
-    "page_downloads_display": "164"
-  },
-  {
-    "package_name": "yao_core",
-    "api_downloads_30d": 12,
-    "page_downloads_display": "12"
-  },
-  {
-    "package_name": "floating_draggable_widget",
-    "api_downloads_30d": 7411,
-    "page_downloads_display": "7.41k"
-  },
-  {
-    "package_name": "network_status_bar",
-    "api_downloads_30d": 50,
-    "page_downloads_display": "50"
-  },
-  {
-    "package_name": "protractor_dar",
-    "api_downloads_30d": 6,
-    "page_downloads_display": "6"
-  },
-  {
-    "package_name": "multi_level_pie",
-    "api_downloads_30d": 14,
-    "page_downloads_display": "14"
-  },
-  {
-    "package_name": "neo4driver",
-    "api_downloads_30d": 45,
-    "page_downloads_display": "45"
-  },
-  {
-    "package_name": "encrypted_shared_preferences",
-    "api_downloads_30d": 4301,
-    "page_downloads_display": "4.3k"
-  },
-  {
-    "package_name": "datapod_engine",
-    "api_downloads_30d": 118,
-    "page_downloads_display": "118"
-  },
-  {
-    "package_name": "htmleez_static",
+    "package_name": "cpn_directory_webview",
     "api_downloads_30d": 28,
     "page_downloads_display": "28"
   },
   {
-    "package_name": "mkm",
-    "api_downloads_30d": 385,
-    "page_downloads_display": "385"
+    "package_name": "flutter_markdown_plus_latex",
+    "api_downloads_30d": 10745,
+    "page_downloads_display": "10.7k"
   },
   {
-    "package_name": "buildbucket_proto",
+    "package_name": "flutter_aleo_sdk",
+    "api_downloads_30d": 41,
+    "page_downloads_display": "41"
+  },
+  {
+    "package_name": "google_analytics_v3_api",
+    "api_downloads_30d": 42,
+    "page_downloads_display": "42"
+  },
+  {
+    "package_name": "oa_fone",
+    "api_downloads_30d": 23,
+    "page_downloads_display": "23"
+  },
+  {
+    "package_name": "dartobjectutils",
+    "api_downloads_30d": 183,
+    "page_downloads_display": "183"
+  },
+  {
+    "package_name": "randomcolored_containers",
+    "api_downloads_30d": 19,
+    "page_downloads_display": "19"
+  },
+  {
+    "package_name": "prisma",
+    "api_downloads_30d": 6,
+    "page_downloads_display": "6"
+  },
+  {
+    "package_name": "ycore",
+    "api_downloads_30d": 7,
+    "page_downloads_display": "7"
+  },
+  {
+    "package_name": "time_picker_sheet_fork",
+    "api_downloads_30d": 27,
+    "page_downloads_display": "27"
+  },
+  {
+    "package_name": "flutter_onnxruntime",
+    "api_downloads_30d": 3557,
+    "page_downloads_display": "3.56k"
+  },
+  {
+    "package_name": "parse_json",
+    "api_downloads_30d": 108,
+    "page_downloads_display": "108"
+  },
+  {
+    "package_name": "viewer3d",
+    "api_downloads_30d": 19,
+    "page_downloads_display": "19"
+  },
+  {
+    "package_name": "ui_aniket",
+    "api_downloads_30d": 12,
+    "page_downloads_display": "12"
+  },
+  {
+    "package_name": "plugin_test_sunny",
+    "api_downloads_30d": 64,
+    "page_downloads_display": "64"
+  },
+  {
+    "package_name": "collect",
+    "api_downloads_30d": 1302,
+    "page_downloads_display": "1.3k"
+  },
+  {
+    "package_name": "flutter_annotation_json",
+    "api_downloads_30d": 21,
+    "page_downloads_display": "21"
+  },
+  {
+    "package_name": "pdf_to_book",
     "api_downloads_30d": 26,
     "page_downloads_display": "26"
   },
   {
-    "package_name": "constraint_solver",
+    "package_name": "ann_flutter",
+    "api_downloads_30d": 31,
+    "page_downloads_display": "31"
+  },
+  {
+    "package_name": "c",
+    "api_downloads_30d": 77,
+    "page_downloads_display": "77"
+  },
+  {
+    "package_name": "onboardme",
+    "api_downloads_30d": 46,
+    "page_downloads_display": "46"
+  },
+  {
+    "package_name": "flutter_facebook_app_links",
+    "api_downloads_30d": 3308,
+    "page_downloads_display": "3.31k"
+  },
+  {
+    "package_name": "text_form_field_validator",
+    "api_downloads_30d": 40,
+    "page_downloads_display": "40"
+  },
+  {
+    "package_name": "mankeli_core",
+    "api_downloads_30d": 1863,
+    "page_downloads_display": "1.86k"
+  },
+  {
+    "package_name": "teller_connect_flutter",
+    "api_downloads_30d": 41,
+    "page_downloads_display": "41"
+  },
+  {
+    "package_name": "esewa_khalti",
+    "api_downloads_30d": 21,
+    "page_downloads_display": "21"
+  },
+  {
+    "package_name": "currency_text_input_formatter_fork",
+    "api_downloads_30d": 23,
+    "page_downloads_display": "23"
+  },
+  {
+    "package_name": "aqueduct_isolates",
+    "api_downloads_30d": 21,
+    "page_downloads_display": "21"
+  },
+  {
+    "package_name": "centrifuge",
+    "api_downloads_30d": 35614,
+    "page_downloads_display": "35.6k"
+  },
+  {
+    "package_name": "neurodb_dart_gdbc",
+    "api_downloads_30d": 26,
+    "page_downloads_display": "26"
+  },
+  {
+    "package_name": "dart_webcore",
+    "api_downloads_30d": 66,
+    "page_downloads_display": "66"
+  },
+  {
+    "package_name": "math_parser",
+    "api_downloads_30d": 9847,
+    "page_downloads_display": "9.85k"
+  },
+  {
+    "package_name": "reactive_mvvm",
+    "api_downloads_30d": 106,
+    "page_downloads_display": "106"
+  },
+  {
+    "package_name": "check_licence_tech",
+    "api_downloads_30d": 200,
+    "page_downloads_display": "200"
+  },
+  {
+    "package_name": "youtube_bottom_navi_view",
+    "api_downloads_30d": 14,
+    "page_downloads_display": "14"
+  },
+  {
+    "package_name": "gesture_art_painter",
+    "api_downloads_30d": 18,
+    "page_downloads_display": "18"
+  },
+  {
+    "package_name": "tizen_app_control",
+    "api_downloads_30d": 736,
+    "page_downloads_display": "736"
+  },
+  {
+    "package_name": "file_io_interface",
+    "api_downloads_30d": 23,
+    "page_downloads_display": "23"
+  },
+  {
+    "package_name": "info_ui_package",
+    "api_downloads_30d": 76,
+    "page_downloads_display": "76"
+  },
+  {
+    "package_name": "cloner",
+    "api_downloads_30d": 214,
+    "page_downloads_display": "214"
+  },
+  {
+    "package_name": "swlegion",
+    "api_downloads_30d": 31,
+    "page_downloads_display": "31"
+  },
+  {
+    "package_name": "flutter_locate",
+    "api_downloads_30d": 15,
+    "page_downloads_display": "15"
+  },
+  {
+    "package_name": "dart_pptx",
+    "api_downloads_30d": 725,
+    "page_downloads_display": "725"
+  },
+  {
+    "package_name": "path_provider_ex2",
+    "api_downloads_30d": 139,
+    "page_downloads_display": "139"
+  },
+  {
+    "package_name": "flutter_inappwebview_forked",
+    "api_downloads_30d": 1,
+    "page_downloads_display": "1"
+  },
+  {
+    "package_name": "flutter_video_player_plugin",
     "api_downloads_30d": 35,
     "page_downloads_display": "35"
   },
   {
-    "package_name": "flutter_countdown_widget",
-    "api_downloads_30d": 21,
-    "page_downloads_display": "21"
+    "package_name": "icalendar_parser",
+    "api_downloads_30d": 7795,
+    "page_downloads_display": "7.79k"
+  },
+  {
+    "package_name": "flutter_core_videoplayer",
+    "api_downloads_30d": 22,
+    "page_downloads_display": "22"
+  },
+  {
+    "package_name": "api_request_builder",
+    "api_downloads_30d": 23,
+    "page_downloads_display": "23"
+  },
+  {
+    "package_name": "jinja",
+    "api_downloads_30d": 30807,
+    "page_downloads_display": "30.8k"
+  },
+  {
+    "package_name": "sound_recorder",
+    "api_downloads_30d": 12,
+    "page_downloads_display": "12"
+  },
+  {
+    "package_name": "spindle_chat",
+    "api_downloads_30d": 89,
+    "page_downloads_display": "89"
+  },
+  {
+    "package_name": "cropper",
+    "api_downloads_30d": 39,
+    "page_downloads_display": "39"
+  },
+  {
+    "package_name": "xxf_flutter",
+    "api_downloads_30d": 95,
+    "page_downloads_display": "95"
+  },
+  {
+    "package_name": "get_suggestions",
+    "api_downloads_30d": 28,
+    "page_downloads_display": "28"
+  },
+  {
+    "package_name": "flutter_app_icons",
+    "api_downloads_30d": 10945,
+    "page_downloads_display": "10.9k"
+  },
+  {
+    "package_name": "gobo",
+    "api_downloads_30d": 59,
+    "page_downloads_display": "59"
+  },
+  {
+    "package_name": "app_preference",
+    "api_downloads_30d": 55,
+    "page_downloads_display": "55"
+  },
+  {
+    "package_name": "gits_cli",
+    "api_downloads_30d": 130,
+    "page_downloads_display": "130"
+  },
+  {
+    "package_name": "telr_mobile_payment_sdk",
+    "api_downloads_30d": 121,
+    "page_downloads_display": "121"
+  },
+  {
+    "package_name": "conreality_pulse",
+    "api_downloads_30d": 28,
+    "page_downloads_display": "28"
+  },
+  {
+    "package_name": "ffmpeg_kit_flutter_video",
+    "api_downloads_30d": 333,
+    "page_downloads_display": "333"
+  },
+  {
+    "package_name": "able_sendkeys",
+    "api_downloads_30d": 237,
+    "page_downloads_display": "237"
+  },
+  {
+    "package_name": "flutter_app_restart",
+    "api_downloads_30d": 26,
+    "page_downloads_display": "26"
+  },
+  {
+    "package_name": "o_i18n_generator",
+    "api_downloads_30d": 15,
+    "page_downloads_display": "15"
+  },
+  {
+    "package_name": "dg_tools",
+    "api_downloads_30d": 24,
+    "page_downloads_display": "24"
+  },
+  {
+    "package_name": "fastyle_dart",
+    "api_downloads_30d": 289,
+    "page_downloads_display": "289"
+  },
+  {
+    "package_name": "imei_imsi_nullsafe",
+    "api_downloads_30d": 18,
+    "page_downloads_display": "18"
+  },
+  {
+    "package_name": "twitter_openapi_dart_generated",
+    "api_downloads_30d": 92,
+    "page_downloads_display": "92"
+  },
+  {
+    "package_name": "usercentrics_sdk",
+    "api_downloads_30d": 17940,
+    "page_downloads_display": "17.9k"
+  },
+  {
+    "package_name": "magpie_cli",
+    "api_downloads_30d": 70,
+    "page_downloads_display": "70"
+  },
+  {
+    "package_name": "opus_codec_linux",
+    "api_downloads_30d": 248,
+    "page_downloads_display": "248"
+  },
+  {
+    "package_name": "chaleno",
+    "api_downloads_30d": 366,
+    "page_downloads_display": "366"
+  },
+  {
+    "package_name": "defaultable",
+    "api_downloads_30d": 20,
+    "page_downloads_display": "20"
+  },
+  {
+    "package_name": "wechat_picker_library",
+    "api_downloads_30d": 44558,
+    "page_downloads_display": "44.6k"
+  },
+  {
+    "package_name": "background_service_easy",
+    "api_downloads_30d": 16,
+    "page_downloads_display": "16"
+  },
+  {
+    "package_name": "color_filter",
+    "api_downloads_30d": 49,
+    "page_downloads_display": "49"
+  },
+  {
+    "package_name": "tencent_conference_uikit",
+    "api_downloads_30d": 166,
+    "page_downloads_display": "166"
+  },
+  {
+    "package_name": "flutter_sewoo_usb_printer",
+    "api_downloads_30d": 23,
+    "page_downloads_display": "23"
+  },
+  {
+    "package_name": "duxt_signals",
+    "api_downloads_30d": 225,
+    "page_downloads_display": "225"
+  },
+  {
+    "package_name": "dart_pub",
+    "api_downloads_30d": 1009,
+    "page_downloads_display": "1.01k"
+  },
+  {
+    "package_name": "dash",
+    "api_downloads_30d": 303,
+    "page_downloads_display": "303"
+  },
+  {
+    "package_name": "flutter_native_select",
+    "api_downloads_30d": 365,
+    "page_downloads_display": "365"
+  },
+  {
+    "package_name": "dart_command",
+    "api_downloads_30d": 26,
+    "page_downloads_display": "26"
+  },
+  {
+    "package_name": "prisma_dmmf",
+    "api_downloads_30d": 13,
+    "page_downloads_display": "13"
   }
 ]

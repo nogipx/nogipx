@@ -1,15 +1,15 @@
 {
-  "total_packages": 76582,
+  "total_packages": 76633,
   "below_1000": {
-    "count": 70256,
-    "percent": 91.739573
+    "count": 70297,
+    "percent": 91.732021
   },
   "1000_to_1M_minus1": {
-    "count": 6046,
-    "percent": 7.894806
+    "count": 6055,
+    "percent": 7.901296
   },
   "at_least_1M": {
-    "count": 280,
-    "percent": 0.365621
+    "count": 281,
+    "percent": 0.366683
   }
 }
