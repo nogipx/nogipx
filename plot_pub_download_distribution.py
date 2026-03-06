@@ -2,19 +2,27 @@
 import argparse
 import csv
 import json
-import math
-from collections import Counter
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 
-def category(v: int) -> str:
-    if v < 1_000:
-        return '<1000'
-    if v < 1_000_000:
-        return '1000–999999'
-    return '>=1000000'
+BINS = [
+    (0, 10, '<10'),
+    (10, 50, '10–49'),
+    (50, 100, '50–99'),
+    (100, 300, '100–299'),
+    (300, 500, '300–499'),
+    (500, 1_000, '500–999'),
+    (1_000, 5_000, '1k–4.9k'),
+    (5_000, 10_000, '5k–9.9k'),
+    (10_000, 50_000, '10k–49.9k'),
+    (50_000, 100_000, '50k–99.9k'),
+    (100_000, 250_000, '100k–249.9k'),
+    (250_000, 500_000, '250k–499.9k'),
+    (500_000, 1_000_000, '500k–999.9k'),
+    (1_000_000, None, '>=1M'),
+]
 
 
 def read_downloads(csv_path: Path):
@@ -26,38 +34,51 @@ def read_downloads(csv_path: Path):
     return values
 
 
-def make_plots(values, out_dir: Path):
+def bucketize(values):
+    counts = {label: 0 for _, _, label in BINS}
+    for v in values:
+        for low, high, label in BINS:
+            if high is None:
+                if v >= low:
+                    counts[label] += 1
+                    break
+            elif low <= v < high:
+                counts[label] += 1
+                break
+    return counts
+
+
+def make_plot(values, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
+    counts = bucketize(values)
 
-    # Plot 1: categories requested in original task
-    counts = Counter(category(v) for v in values)
-    ordered = ['<1000', '1000–999999', '>=1000000']
-    xs = ordered
-    ys = [counts[x] for x in ordered]
+    labels = [label for _, _, label in BINS]
+    ys = [counts[label] for label in labels]
 
-    fig, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.bar(xs, ys, color=['#90caf9', '#64b5f6', '#1976d2'])
-    ax.set_title('Распределение пакетов pub.dev по месячным скачиваниям')
+    fig, ax = plt.subplots(figsize=(14, 6))
+    bars = ax.bar(labels, ys, color='#42a5f5')
+    ax.set_title('Распределение пакетов pub.dev по месячным скачиваниям (детальные диапазоны)')
     ax.set_xlabel('Диапазон скачиваний в месяц')
     ax.set_ylabel('Количество пакетов')
+    ax.tick_params(axis='x', labelrotation=35)
+
     for b in bars:
         h = int(b.get_height())
-        ax.annotate(f'{h:,}'.replace(',', ' '), (b.get_x() + b.get_width() / 2, h),
-                    ha='center', va='bottom', fontsize=10, xytext=(0, 3), textcoords='offset points')
+        ax.annotate(
+            f'{h:,}'.replace(',', ' '),
+            (b.get_x() + b.get_width() / 2, h),
+            ha='center',
+            va='bottom',
+            fontsize=8,
+            xytext=(0, 2),
+            textcoords='offset points',
+        )
+
     fig.tight_layout()
-    fig.savefig(out_dir / 'downloads_category_distribution.png', dpi=160)
+    fig.savefig(out_dir / 'downloads_category_distribution.png', dpi=170)
     plt.close(fig)
 
-    # Plot 2: histogram on log10 scale for more detail
-    log_values = [math.log10(v + 1) for v in values]
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.hist(log_values, bins=40, color='#42a5f5', edgecolor='white')
-    ax.set_title('Гистограмма пакетов по месячным скачиваниям (логарифмическая шкала)')
-    ax.set_xlabel('log10(downloads_per_month + 1)')
-    ax.set_ylabel('Количество пакетов')
-    fig.tight_layout()
-    fig.savefig(out_dir / 'downloads_histogram_log10.png', dpi=160)
-    plt.close(fig)
+    return counts
 
 
 def main():
@@ -70,15 +91,18 @@ def main():
     out_dir = Path(args.out_dir)
 
     values = read_downloads(csv_path)
-    make_plots(values, out_dir)
+    counts = make_plot(values, out_dir)
 
     summary = {
         'total_packages': len(values),
         'min_downloads_per_month': min(values) if values else 0,
         'max_downloads_per_month': max(values) if values else 0,
+        'bins': [{
+            'label': label,
+            'count': counts[label],
+        } for _, _, label in BINS],
         'output_files': [
             str(out_dir / 'downloads_category_distribution.png'),
-            str(out_dir / 'downloads_histogram_log10.png'),
         ],
     }
     (out_dir / 'visualization_summary.json').write_text(
