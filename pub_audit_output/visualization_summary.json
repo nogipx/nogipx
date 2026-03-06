@@ -1,0 +1,9 @@
+{
+  "total_packages": 76582,
+  "min_downloads_per_month": 0,
+  "max_downloads_per_month": 9399183,
+  "output_files": [
+    "pub_audit_output/downloads_category_distribution.png",
+    "pub_audit_output/downloads_histogram_log10.png"
+  ]
+}
