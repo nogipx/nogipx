@@ -166,6 +166,7 @@ def main():
     progress_path = out_dir / "progress.jsonl"
     latest_versions_path = out_dir / "latest_versions.jsonl"
     csv_path = out_dir / "package_downloads.csv"
+    full_csv_path = out_dir / "package_full_data.csv"
     result_path = out_dir / "result.json"
     errors_path = out_dir / "errors.jsonl"
     validation_path = out_dir / "validation_sample.json"
@@ -246,6 +247,8 @@ def main():
                     "max_points": score_data.get("maxPoints") if score_data else None,
                     "download_count_30_days": score_data.get("downloadCount30Days") if score_data else None,
                 },
+                "score_raw": score_data if score_data else None,
+                "package_api_raw": package_data,
                 "latest": latest,
             }
 
@@ -292,6 +295,58 @@ def main():
         for r in rows:
             w.writerow([r["package_name"], r["total_downloads"], r["category"]])
 
+    # Full package data in CSV (text format, including JSON columns for complete payloads)
+    if args.collect_latest:
+        full_header = [
+            "package_name",
+            "total_downloads",
+            "category",
+            "latest_version",
+            "latest_published",
+            "description",
+            "tags_json",
+            "topics_json",
+            "repository_url",
+            "homepage_url",
+            "issue_tracker_url",
+            "pub_dev_url",
+            "score_like_count",
+            "score_granted_points",
+            "score_max_points",
+            "score_download_count_30_days",
+            "score_raw_json",
+            "latest_json",
+            "package_api_raw_json",
+        ]
+        with full_csv_path.open("w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(full_header)
+            for pkg in packages:
+                metric = done.get(pkg, {})
+                latest_row = latest_done.get(pkg, {})
+                score = latest_row.get("score") or {}
+                w.writerow([
+                    pkg,
+                    metric.get("total_downloads"),
+                    metric.get("category"),
+                    latest_row.get("latest_version"),
+                    latest_row.get("latest_published"),
+                    latest_row.get("description"),
+                    json.dumps(latest_row.get("tags", []), ensure_ascii=False),
+                    json.dumps(latest_row.get("topics", []), ensure_ascii=False),
+                    latest_row.get("repository_url"),
+                    latest_row.get("homepage_url"),
+                    latest_row.get("issue_tracker_url"),
+                    latest_row.get("pub_dev_url"),
+                    score.get("like_count"),
+                    score.get("granted_points"),
+                    score.get("max_points"),
+                    score.get("download_count_30_days"),
+                    json.dumps(latest_row.get("score_raw"), ensure_ascii=False),
+                    json.dumps(latest_row.get("latest"), ensure_ascii=False),
+                    json.dumps(latest_row.get("package_api_raw"), ensure_ascii=False),
+                ])
+
     total_packages = len(rows)
     c1 = sum(1 for r in rows if r["category"] == "<1000")
     c2 = sum(1 for r in rows if r["category"] == "1000–999999")
@@ -310,6 +365,7 @@ def main():
         "latest_versions_collected": len([p for p in packages if p in latest_done]) if args.collect_latest else 0,
         "collect_score_tags": args.collect_score_tags,
         "latest_versions_path": str(latest_versions_path) if args.collect_latest else None,
+        "full_csv_path": str(full_csv_path) if args.collect_latest else None,
         "errors_logged": sum(1 for _ in errors_path.open("r", encoding="utf-8")) if errors_path.exists() else 0,
         "duration_seconds": round(time.time() - started, 2),
     }
@@ -333,6 +389,8 @@ def main():
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
     print(f"CSV: {csv_path}")
+    if args.collect_latest:
+        print(f"Full CSV: {full_csv_path}")
     if args.collect_latest:
         print(f"Latest versions JSONL: {latest_versions_path}")
     print(f"Validation sample: {validation_path}")
