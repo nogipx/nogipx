@@ -17,6 +17,7 @@
   "latest_versions_collected": 76633,
   "collect_score_tags": true,
   "latest_versions_path": "pub_audit_output/latest_versions.jsonl",
+  "full_csv_path": "pub_audit_output/package_full_data.csv",
   "errors_logged": 158,
-  "duration_seconds": 1880.0
+  "duration_seconds": 2386.52
 }
