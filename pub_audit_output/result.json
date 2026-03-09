@@ -1,0 +1,23 @@
+{
+  "total_packages": 76633,
+  "below_1000": {
+    "count": 70297,
+    "percent": 91.732021
+  },
+  "1000_to_1M_minus1": {
+    "count": 6055,
+    "percent": 7.901296
+  },
+  "at_least_1M": {
+    "count": 281,
+    "percent": 0.366683
+  },
+  "note": "pub.dev public API exposes downloadCount30Days; used as total_downloads proxy because all-time total is not available via public endpoint.",
+  "collect_latest": true,
+  "latest_versions_collected": 76633,
+  "collect_score_tags": true,
+  "latest_versions_path": "pub_audit_output/latest_versions.jsonl",
+  "full_csv_path": "pub_audit_output/package_full_data.csv",
+  "errors_logged": 158,
+  "duration_seconds": 2386.52
+}

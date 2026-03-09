@@ -1,0 +1,66 @@
+{
+  "total_packages": 76582,
+  "min_downloads_per_month": 0,
+  "max_downloads_per_month": 9399183,
+  "bins": [
+    {
+      "label": "<10",
+      "count": 8118
+    },
+    {
+      "label": "10–49",
+      "count": 35585
+    },
+    {
+      "label": "50–99",
+      "count": 11356
+    },
+    {
+      "label": "100–299",
+      "count": 10163
+    },
+    {
+      "label": "300–499",
+      "count": 2698
+    },
+    {
+      "label": "500–999",
+      "count": 2336
+    },
+    {
+      "label": "1k–4.9k",
+      "count": 2942
+    },
+    {
+      "label": "5k–9.9k",
+      "count": 847
+    },
+    {
+      "label": "10k–49.9k",
+      "count": 1296
+    },
+    {
+      "label": "50k–99.9k",
+      "count": 281
+    },
+    {
+      "label": "100k–249.9k",
+      "count": 368
+    },
+    {
+      "label": "250k–499.9k",
+      "count": 177
+    },
+    {
+      "label": "500k–999.9k",
+      "count": 135
+    },
+    {
+      "label": ">=1M",
+      "count": 280
+    }
+  ],
+  "output_files": [
+    "pub_audit_output/downloads_category_distribution.png"
+  ]
+}
