@@ -4,13 +4,5 @@
 
 [Личный сайт](https://nogipx.github.io/nogipx/) · [Telegram](https://t.me/nogipx) · [Почта](mailto:nogipx@gmail.com)
 
-### Проекты
-
 **[Rhyolite Sync](https://rhyolite.nogipx.dev/)**<br>
 Синхронизация заметок Obsidian между устройствами с шифрованием.
-
-**rpc_dart**<br>
-Библиотека для удалённых вызовов и передачи потоков данных в Dart.
-
-**Parlance**<br>
-Общий язык для модулей и плагинов Dart-приложения.
