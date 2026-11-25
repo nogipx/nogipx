@@ -2,178 +2,34 @@
 <html lang="ru">
   <head>
     <meta charset="utf-8"/>
-    <link href="style.css" rel="stylesheet"/>
-    <link href="mark.svg" rel="icon" type="image/svg+xml"/>
+    <link href="profile.css" rel="stylesheet"/>
+    <link href="enso.png" rel="icon" type="image/png"/>
     <!--$-->
-    <title>Карим Маматказин — nogipx</title>
+    <title>Karmarov (@nogipx) — приложения и библиотеки</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="Архитектор ПО Карим Маматказин. Проекты на Dart: rpc_dart, Parlance и Rhyolite Sync."/>
-    <meta name="theme-color" content="#08080c"/>
+    <meta name="description" content="Karmarov (@nogipx) — автор Rhyolite Sync, rpc_dart и Parlance. Проекты и контакты."/>
+    <meta name="theme-color" content="#f6f7fa"/>
     <!--/-->
   </head>
   <body>
-    <div id="top">
-      <a class="skip" href="#main">К содержанию</a>
-      <header class="mast">
-        <div class="width mast-inner">
-          <a class="brand" href="#top"><img alt src="mark.svg"/>nogipx</a>
-          <nav aria-label="Навигация">
-            <a href="#projects">Проекты</a>
-            <a href="#work">Достижения</a>
-            <a class="git" href="https://github.com/nogipx">GitHub</a>
-          </nav>
+    <main>
+      <header>
+        <div class="identity">
+          <img class="enso" alt width="96" height="96" src="enso.png"/>
+          <h1>Karmarov <span class="handle">@nogipx</span></h1>
         </div>
+        <p>Архитектор ПО. Пишу приложения на Flutter и библиотеки на Dart.</p>
       </header>
-      <main id="main">
-        <section class="hero">
-          <div class="width stage">
-            <img class="optic" fetchpriority="high" width="1536" height="1024" alt src="art/signal.webp"/>
-            <div class="intro">
-              <p class="role">Архитектор ПО</p>
-              <h1>Карим<br/>Маматказин</h1>
-              <p class="bio">
-                Пишу на Dart. Проектирую протоколы связи, инструменты для модульных приложений и синхронизацию заметок в Obsidian.
-              </p>
-              <div class="actions">
-                <a class="button" href="#projects">Смотреть проекты</a>
-                <a class="quiet" href="https://t.me/nogipx">Связаться</a>
-              </div>
-            </div>
-          </div>
-        </section>
-        <section id="projects" class="width catalog">
-          <h2>Избранные проекты</h2>
-          <article class="featured">
-            <div class="feature-copy">
-              <p class="category">Библиотека для Dart</p>
-              <h3>rpc_dart</h3>
-              <p>
-                Описываешь контракт один раз. Тот же вызов работает между изолятами в приложении и между браузером и сервером. Меняется только транспорт.
-              </p>
-              <div class="links">
-                <a href="https://pub.dev/packages/rpc_dart">Пакет на pub.dev</a>
-                <a href="https://github.com/nogipx/rpc_dart">GitHub</a>
-              </div>
-            </div>
-            <fieldset class="demo">
-              <legend class="sr-only">Выберите вид RPC-вызова</legend>
-              <div class="demo-title">Схема вызова</div>
-              <div class="switch">
-                <label>
-                  <input aria-controls="diagram-unary" type="radio" name="call-mode" value="unary" checked/><span>Unary</span>
-                </label>
-                <label>
-                  <input aria-controls="diagram-server" type="radio" name="call-mode" value="server"/><span>Server stream</span>
-                </label>
-                <label>
-                  <input aria-controls="diagram-client" type="radio" name="call-mode" value="client"/><span>Client stream</span>
-                </label>
-                <label>
-                  <input aria-controls="diagram-duplex" type="radio" name="call-mode" value="duplex"/><span>Duplex</span>
-                </label>
-              </div>
-              <div id="diagram-unary" class="diagram unary">
-                <div class="endpoints"><span>Клиент</span><span>Сервер</span></div>
-                <div class="lanes" aria-hidden="true">
-                  <div class="lane outgoing"><span class="packet"></span></div>
-                  <div class="lane incoming"><span class="packet"></span></div>
-                </div>
-                <p>Один запрос и один ответ.</p>
-              </div>
-              <div id="diagram-server" class="diagram server">
-                <div class="endpoints"><span>Клиент</span><span>Сервер</span></div>
-                <div class="lanes" aria-hidden="true">
-                  <div class="lane outgoing"><span class="packet"></span></div>
-                  <div class="lane incoming"><span class="packet"></span><span class="packet"></span><span class="packet"></span></div>
-                </div>
-                <p>На один запрос сервер отправляет поток ответов.</p>
-              </div>
-              <div id="diagram-client" class="diagram client">
-                <div class="endpoints"><span>Клиент</span><span>Сервер</span></div>
-                <div class="lanes" aria-hidden="true">
-                  <div class="lane outgoing"><span class="packet"></span><span class="packet"></span><span class="packet"></span></div>
-                  <div class="lane incoming"><span class="packet"></span></div>
-                </div>
-                <p>Клиент отправляет поток сообщений и получает один ответ.</p>
-              </div>
-              <div id="diagram-duplex" class="diagram duplex">
-                <div class="endpoints"><span>Клиент</span><span>Сервер</span></div>
-                <div class="lanes" aria-hidden="true">
-                  <div class="lane outgoing"><span class="packet"></span><span class="packet"></span><span class="packet"></span></div>
-                  <div class="lane incoming"><span class="packet"></span><span class="packet"></span><span class="packet"></span></div>
-                </div>
-                <p>Обе стороны могут отправлять сообщения независимо.</p>
-              </div>
-            </fieldset>
-          </article>
-          <div class="pair">
-            <article class="project-card parlance">
-              <div class="cover">
-                <img alt src="art/parlance.webp"/>
-                <div class="cover-type">
-                  <p class="category">Архитектура приложений</p>
-                  <h3><a href="https://pub.dev/packages/parlance">Parlance</a></h3>
-                </div>
-              </div>
-              <p class="description">
-                Модули, плагины и агенты говорят на одном языке. У каждого состояния есть владелец, а журнал помогает проследить цепочку событий до исходной команды.
-              </p>
-              <div class="links">
-                <a href="https://pub.dev/packages/parlance">Пакет на pub.dev</a>
-                <a href="https://github.com/nogipx/parlance">GitHub</a>
-              </div>
-            </article>
-            <article class="project-card rhyolite">
-              <div class="cover">
-                <img alt src="art/rhyolite.webp"/>
-                <div class="cover-type">
-                  <p class="category">Сервис для Obsidian</p>
-                  <h3><a href="https://rhyolite.nogipx.dev/">Rhyolite Sync</a></h3>
-                </div>
-              </div>
-              <p class="description">
-                Редактируешь одну заметку на телефоне и ноутбуке. Движок объединяет правки посимвольно, а содержимое шифруется ещё до отправки на сервер.
-              </p>
-              <div class="links">
-                <a href="https://rhyolite.nogipx.dev/">Сайт проекта</a>
-                <a href="https://github.com/nogipx/rhyolite_sync">GitHub</a>
-              </div>
-            </article>
-          </div>
-        </section>
-        <section id="work" class="width work">
-          <h2>Достижения</h2>
-          <div class="rows">
-            <details open>
-              <summary>Выпустил семейство RPC-пакетов</summary>
-              <p>
-                Вынес транспорты в отдельные пакеты. Можно подключить к контракту HTTP, WebSocket или WebAssembly и выбрать нужный вид обмена сообщениями.
-              </p>
-              <a href="https://pub.dev/publishers/rpc.nogipx.dev/packages">Пакеты на pub.dev</a>
-            </details>
-            <details>
-              <summary>Сделал журнал событий Parlance</summary>
-              <p>
-                В просмотрщике можно раскрыть цепочку событий и воспроизвести её по шагам. Так видно, какая команда запустила изменение и какой модуль на него отреагировал.
-              </p>
-              <a href="https://github.com/nogipx/parlance/tree/main/apps/journal_viewer">Просмотрщик журнала</a>
-            </details>
-            <details>
-              <summary>Открыл сервер синхронизации для Obsidian</summary>
-              <p>
-                Опубликовал движок Rhyolite Sync и сервер для самостоятельного развёртывания. Можно хранить зашифрованные заметки в своей инфраструктуре и подключать к ней устройства через плагин Obsidian.
-              </p>
-              <a href="https://github.com/nogipx/rhyolite_sync/blob/main/SELFHOST.md">Инструкция по развёртыванию</a>
-            </details>
-          </div>
-        </section>
-      </main>
-      <footer>
-        <div class="width foot">
-          <p>Карим Маматказин</p>
-          <div class="links"><a href="https://t.me/nogipx">Telegram</a><a href="https://github.com/nogipx">GitHub</a></div>
-        </div>
+      <nav id="projects" aria-label="Мои проекты">
+        <a class="entry" href="https://rhyolite.nogipx.dev/"><strong>Rhyolite Sync</strong><span>Зашифрованная синхронизация заметок Obsidian</span></a>
+        <a class="entry" href="https://rpc.nogipx.dev/"><strong>rpc_dart</strong><span>Удалённые вызовы и потоки на Dart</span></a>
+        <a class="entry" href="https://pub.dev/packages/parlance"><strong>Parlance</strong><span>Общий язык для модулей и плагинов</span></a>
+      </nav>
+      <footer class="contacts">
+        <a href="https://t.me/nogipx">Telegram</a>
+        <a href="https://github.com/nogipx">GitHub</a>
+        <a href="mailto:nogipx@gmail.com">Почта</a>
       </footer>
-    </div>
+    </main>
   </body>
 </html>

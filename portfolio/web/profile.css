@@ -1,0 +1,37 @@
+:root {
+  color-scheme: light dark;
+  --paper: #fcfbfa;
+  --ink: #222125;
+  --muted: #605d65;
+  --line: #dedbe0;
+  --accent: #624083;
+  font: 100%/1.5 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+* { box-sizing: border-box; }
+body, h1, p { margin: 0; }
+main { width: min(38rem, calc(100% - 3rem)); margin: clamp(3rem, 15vh, 9rem) auto; }
+.identity { display: flex; align-items: center; gap: clamp(.65rem, 2vw, 1.25rem); }
+.enso { display: block; flex: none; width: clamp(4rem, 10vw, 6rem); height: auto; mix-blend-mode: multiply; }
+h1 { font-weight: 580; font-size: clamp(2.4rem, 6vw, 3.4rem); line-height: 1.08; letter-spacing: -.055em; }
+.handle { display: block; margin-top: .35rem; font-size: 1rem; font-weight: 450; letter-spacing: normal; color: var(--muted); }
+header p { max-width: 43ch; margin-top: .85rem; font-size: 1.1rem; color: var(--muted); }
+nav { margin: 2.5rem 0 1rem; }
+a { color: inherit; text-underline-offset: .24em; }
+a:hover { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: .25rem; }
+.entry { display: grid; grid-template-columns: 8.5rem 1fr; align-items: baseline; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+.entry strong { font-size: 1.18rem; letter-spacing: -.035em; font-weight: 600; }
+.entry span { color: var(--muted); }
+.entry:hover strong, .entry:focus-visible strong { text-decoration: underline; }
+.contacts { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: 2.5rem; }
+.contacts a { font-size: .95rem; text-decoration-color: var(--line); }
+.contacts a:hover { text-decoration-color: currentColor; }
+@media (max-width: 520px) {
+  .entry { grid-template-columns: 1fr; gap: .15rem; padding-block: .8rem; }
+}
+@media (prefers-color-scheme: dark) {
+  .enso { filter: invert(1); mix-blend-mode: screen; }
+  :root { --paper: #19181b; --ink: #f5f3f6; --muted: #bdb9c2; --line: #434047; --accent: #d2baff; }
+}

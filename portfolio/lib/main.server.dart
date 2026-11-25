@@ -1,24 +1,24 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/server.dart';
 
-import 'portfolio.dart';
+import 'profile.dart';
 
 void main() {
   Jaspr.initializeApp();
-  runApp(portfolioDocument);
+  runApp(profileDocument);
 }
 
-const portfolioDocument = Document(
-  title: 'Карим Маматказин — nogipx',
+const profileDocument = Document(
+  title: 'Karmarov (@nogipx) — приложения и библиотеки',
   lang: 'ru',
   base: null,
   meta: {
-    'description': 'Архитектор ПО Карим Маматказин. Проекты на Dart: rpc_dart, Parlance и Rhyolite Sync.',
-    'theme-color': '#08080c',
+    'description': 'Karmarov (@nogipx) — автор Rhyolite Sync, rpc_dart и Parlance. Проекты и контакты.',
+    'theme-color': '#f6f7fa',
   },
   head: [
-    link(href: 'style.css', rel: 'stylesheet'),
-    link(href: 'mark.svg', rel: 'icon', type: 'image/svg+xml'),
+    link(href: 'profile.css', rel: 'stylesheet'),
+    link(href: 'enso.png', rel: 'icon', type: 'image/png'),
   ],
-  body: Portfolio(),
+  body: Profile(),
 );
