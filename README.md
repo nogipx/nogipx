@@ -1,16 +1,16 @@
-## Hi there 👋
+<h1><img src="portfolio/web/enso.png" width="56" height="56" align="middle" alt=""> Karmarov</h1>
 
-<!--
-**nogipx/nogipx** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Я @nogipx. Пишу приложения на Flutter и библиотеки на Dart.
 
-Here are some ideas to get you started:
+[Личный сайт](https://nogipx.github.io/nogipx/) · [Telegram](https://t.me/nogipx) · [Почта](mailto:nogipx@gmail.com)
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+### Проекты
+
+**[Rhyolite Sync](https://rhyolite.nogipx.dev/)**<br>
+Синхронизация заметок Obsidian между устройствами с шифрованием.
+
+**[rpc_dart](https://rpc.nogipx.dev/)**<br>
+Библиотека для удалённых вызовов и передачи потоков данных в Dart.
+
+**[Parlance](https://pub.dev/packages/parlance)**<br>
+Общий язык для модулей и плагинов Dart-приложения.
