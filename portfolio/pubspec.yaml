@@ -1,0 +1,9 @@
+name: nogipx_portfolio
+description: Портфолио Карима Маматказина
+publish_to: none
+environment:
+  sdk: ^3.14.0
+dependencies:
+  jaspr: ^0.23.5
+jaspr:
+  mode: static
