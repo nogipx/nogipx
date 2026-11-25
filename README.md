@@ -3,6 +3,3 @@
 Я @nogipx. Пишу приложения на Flutter и библиотеки на Dart.
 
 [Личный сайт](https://nogipx.github.io/nogipx/) · [Telegram](https://t.me/nogipx) · [Почта](mailto:nogipx@gmail.com)
-
-**[Rhyolite Sync](https://rhyolite.nogipx.dev/)**<br>
-Синхронизация заметок Obsidian между устройствами с шифрованием.
