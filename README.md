@@ -9,8 +9,8 @@
 **[Rhyolite Sync](https://rhyolite.nogipx.dev/)**<br>
 Синхронизация заметок Obsidian между устройствами с шифрованием.
 
-**[rpc_dart](https://rpc.nogipx.dev/)**<br>
+**rpc_dart**<br>
 Библиотека для удалённых вызовов и передачи потоков данных в Dart.
 
-**[Parlance](https://pub.dev/packages/parlance)**<br>
+**Parlance**<br>
 Общий язык для модулей и плагинов Dart-приложения.
